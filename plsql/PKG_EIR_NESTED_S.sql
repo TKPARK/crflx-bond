@@ -1,28 +1,28 @@
 CREATE OR REPLACE PACKAGE PKG_EIR_NESTED_S AS
   -- EIR Calculation Information Type
   TYPE EIR_CALC_INFO IS RECORD (
-    EVENT_DATE     CHAR(8)            -- EVENT 발생일 (기준일)
-   ,BOND_TYPE      CHAR(1)            -- 채권종류(1.이표채, 2.할인채, 3.단리채(만기일시), 4.복리채)
-   ,ISSUE_DATE     CHAR(8)            -- 발행일        
-   ,EXPIRE_DATE    CHAR(8)            -- 만기일        
-   ,FACE_AMT       NUMBER(20,2)       -- 액면금액      
-   ,BOOK_AMT       NUMBER(20,2)       -- 장부금액      
-   ,IR             NUMBER(10,5)       -- 표면이자율    
-   ,EIR            NUMBER(15,10)      -- 유효이자율    
-   ,INT_CYCLE      NUMBER(10)         -- 이자주기(월)  
-   ,ALLOWED_LIMIT  NUMBER(10,5)       -- 오차한도($)   
+    EVENT_DATE     CHAR(8)       -- EVENT 발생일 (기준일)
+   ,BOND_TYPE      CHAR(1)       -- 채권종류(1.이표채, 2.할인채, 3.단리채(만기일시), 4.복리채)
+   ,ISSUE_DATE     CHAR(8)       -- 발행일
+   ,EXPIRE_DATE    CHAR(8)       -- 만기일
+   ,FACE_AMT       NUMBER(20,2)  -- 액면금액
+   ,BOOK_AMT       NUMBER(20,2)  -- 장부금액
+   ,IR             NUMBER(10,5)  -- 표면이자율
+   ,EIR            NUMBER(15,10) -- 유효이자율
+   ,INT_CYCLE      NUMBER(10)    -- 이자주기(월)
+   ,ALLOWED_LIMIT  NUMBER(10,5)  -- 오차한도($)
   );
   -- EVENT INFO TYPE
   TYPE EVENT_INFO_TYPE IS RECORD (
-    BOND_CODE      CHAR(10)      -- Bond Code(채권잔고의 PK) 
-   ,BUY_DATE       CHAR(8)       -- Buy Date (채권잔고의 PK) 
-   ,EVENT_DATE     CHAR(8)       -- 이벤트일 (PK) 
-   ,EVENT_TYPE     CHAR(1)       -- Event 종류(PK) : 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복 
-   ,IR             NUMBER(10,5)  -- 표면이자율     
-   ,EIR            NUMBER(15,10)      -- 유효이자율    
-   ,SELL_RT        NUMBER(10,5)       -- 매도율        
-   ,FACE_AMT       NUMBER(20,2)       -- 액면금액      
-   ,BOOK_AMT       NUMBER(20,2)       -- 장부금액      
+    BOND_CODE      CHAR(10)      -- Bond Code(채권잔고의 PK)
+   ,BUY_DATE       CHAR(8)       -- Buy Date (채권잔고의 PK)
+   ,EVENT_DATE     CHAR(8)       -- 이벤트일 (PK)
+   ,EVENT_TYPE     CHAR(1)       -- Event 종류(PK) : 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복
+   ,IR             NUMBER(10,5)  -- 표면이자율
+   ,EIR            NUMBER(15,10) -- 유효이자율
+   ,SELL_RT        NUMBER(10,5)  -- 매도율
+   ,FACE_AMT       NUMBER(20,2)  -- 액면금액
+   ,BOOK_AMT       NUMBER(20,2)  -- 장부금액
   );
   
   -- 외부에 노출할 Function, Procedure만 선언부에 선언

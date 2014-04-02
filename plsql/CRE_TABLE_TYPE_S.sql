@@ -1,3 +1,20 @@
+-- EVENT INFO TYPE
+CREATE OR REPLACE TYPE ISS.EVENT_INFO_TYPE_S AS OBJECT (
+    FUND_CODE      CHAR(8)       -- 펀드코드 (채권잔고의 PK)
+   ,BOND_CODE      CHAR(12)      -- 종목코드(채권잔고의 PK)
+   ,BUY_DATE       CHAR(8)       -- Buy Date (채권잔고의 PK)
+   ,BUY_PRICE      NUMBER(13)    -- 매수단가 (채권잔고의 PK)
+   ,BALAN_SEQ      NUMBER(13)    -- 잔고일련번호(채권잔고의 PK)
+   ,EVENT_DATE     CHAR(8)       -- 이벤트일 (PK)
+   ,EVENT_SEQ      NUMBER        -- 이벤트SEQ(PK)
+   ,EVENT_TYPE     CHAR(1)       -- Event 종류: 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복 
+   ,DL_UV          NUMBER(20)    -- 거래단가
+   ,DL_QT          NUMBER(20)    -- 거래수량
+   ,STL_DT_TP      CHAR(1)       -- 결제일구분(1.당일, 2.익일)
+   ,IR             NUMBER(10,5)  -- 표면이자율
+   ,SELL_RT        NUMBER(10,5)  -- 매도율 
+);
+/
 -- Cash Flow Type (동일 기준일 SEQ 고려)
 CREATE OR REPLACE TYPE CF_TYPE_S AS OBJECT (
  BASE_DATE      CHAR(8)            /* 기준일   */
@@ -38,18 +55,21 @@ CREATE OR REPLACE TYPE TABLE_SGF_S AS TABLE OF SGF_TYPE_S
 
 -- Event 결과 INFO (Event 결과정보) - Nested Table, TABLE_CF, TABLE_SGF을 Nested Table 필드로 가짐
 CREATE TABLE EVENT_RESULT_NESTED_S (
- BOND_CODE      CHAR(10) NOT NULL  -- Bond Code(채권잔고의 PK) 
-,BUY_DATE       CHAR(8)  NOT NULL  -- Buy Date (채권잔고의 PK) 
-,EVENT_DATE     CHAR(8)  NOT NULL  -- 이벤트일 (PK)
-,EVENT_SEQ      NUMBER   NOT NULL  -- 이벤트 SEQ (PK : 동일한 EVENT일에 2개이상의 동일한 EVENT 발생시를 고려함) 
-,EVENT_TYPE     CHAR(1)  NOT NULL  -- Event 종류 : 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복 
-,IR             NUMBER(10,5)       -- 표면이자율     
-,EIR            NUMBER(15,10)      -- 유효이자율    
-,SELL_RT        NUMBER(10,5)       -- 매도율        
-,FACE_AMT       NUMBER(20,2)       -- 액면금액      
-,BOOK_AMT       NUMBER(20,2)       -- 장부금액      
-,CF_LIST        TABLE_CF_S         -- Cash Flow List 
-,SGF_LIST       TABLE_SGF_S        -- SangGakFlow List 
+    FUND_CODE   CHAR(10)   NOT NULL -- 펀드코드
+  , BOND_CODE   CHAR(10)   NOT NULL -- 종목코드
+  , BUY_DATE    CHAR(8)    NOT NULL -- 매수일자
+  , BUY_PRICE   NUMBER(13) NOT NULL -- 매수단가
+  , BALAN_SEQ   NUMBER(13) NOT NULL -- 잔고일련번호
+  , EVENT_DATE  CHAR(8)    NOT NULL -- 이벤트일 (PK)
+  , EVENT_SEQ   NUMBER     NOT NULL -- 이벤트 SEQ (PK : 동일한 EVENT일에 2개이상의 동일한 EVENT 발생시를 고려함)
+  , EVENT_TYPE  CHAR(1)    NOT NULL -- Event 종류 : 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복
+  , IR          NUMBER(10,5)        -- 표면이자율
+  , EIR         NUMBER(15,10)       -- 유효이자율
+  , SELL_RT     NUMBER(10,5)        -- 매도율
+  , TOT_INT     NUMBER(22)          -- 총이자금액
+  , ACCRUED_INT NUMBER(22)          -- 경과이자
+  , CF_LIST     TABLE_CF_S          -- Cash Flow List
+  , SGF_LIST    TABLE_SGF_S         -- SangGakFlow List
 ) NESTED TABLE "CF_LIST" STORE AS "EVENT_RESULT_NESTED_S_CF_LIST"
   NESTED TABLE "SGF_LIST" STORE AS "EVENT_RESULT_NESTED_S_SGF_LIST" 
 /

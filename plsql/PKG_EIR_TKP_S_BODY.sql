@@ -640,42 +640,43 @@ CREATE OR REPLACE PACKAGE BODY ISS.PKG_EIR_TKP_S AS
   BEGIN
     /* 잔고 TABLE */
     -- PK
-    T_BOND_BALANCE.BIZ_DATE := I_EVENT_INFO.EVENT_DATE; -- 영업일자
-    T_BOND_BALANCE.FUND_CODE := I_EVENT_INFO.BOND_CODE; -- 펀드코드
-    T_BOND_BALANCE.BOND_CODE := I_EVENT_INFO.BOND_CODE; -- 종목코드
-    T_BOND_BALANCE.BUY_DATE := I_EVENT_INFO.BUY_DATE; -- 매수일자
-    T_BOND_BALANCE.BUY_PRICE := T_TRD_PRICE; -- 매수단가
-    T_BOND_BALANCE.BALAN_SEQ := PKG_EIR_TKP_S.FN_GET_BALAN_SEQ(T_BOND_BALANCE); -- 잔고일련번호
+    T_BOND_BALANCE.BIZ_DATE        := I_EVENT_INFO.EVENT_DATE;                        -- 영업일자
+    T_BOND_BALANCE.FUND_CODE       := I_EVENT_INFO.BOND_CODE;                         -- 펀드코드
+    T_BOND_BALANCE.BOND_CODE       := I_EVENT_INFO.BOND_CODE;                         -- 종목코드
+    T_BOND_BALANCE.BUY_DATE        := I_EVENT_INFO.BUY_DATE;                          -- 매수일자
+    T_BOND_BALANCE.BUY_PRICE       := T_TRD_PRICE;                                    -- 매수단가
+    T_BOND_BALANCE.BALAN_SEQ       := PKG_EIR_TKP_S.FN_GET_BALAN_SEQ(T_BOND_BALANCE); -- 잔고일련번호
     
     -- VALUE
-    T_BOND_BALANCE.BOND_IR := I_EVENT_INFO.IR; -- IR
-    T_BOND_BALANCE.BOND_EIR := I_EVENT_INFO.EIR; -- EIR
-    T_BOND_BALANCE.TOT_QTY := T_TRD_QTY; -- 총잔고수량            
-    T_BOND_BALANCE.TDY_AVAL_QTY := T_TRD_QTY; -- 당일가용수량          
-    T_BOND_BALANCE.NDY_AVAL_QTY := T_TRD_QTY; -- 익일가용수량          
-    T_BOND_BALANCE.BOOK_AMT := T_BOOK_AMT; -- 장부금액              
-    T_BOND_BALANCE.BOOK_PRC_AMT := T_BOOK_PRC_AMT; -- 장부원가              
-    T_BOND_BALANCE.ACCRUED_INT := I_ACCRUED_INT; -- 경과이자              
-    T_BOND_BALANCE.BTRM_UNPAID_INT := 0; -- 전기미수이자          
-    T_BOND_BALANCE.TTRM_BOND_INT := 0; -- 당기채권이자          
-    T_BOND_BALANCE.SANGGAK_AMT := 0; -- 상각금액(상각이자)    
-    T_BOND_BALANCE.MI_SANGGAK_AMT := T_MI_SANGGAK_AMT; -- 미상각금액(미상각이자)
-    T_BOND_BALANCE.TRD_PRFT := 0; -- 매매이익              
-    T_BOND_BALANCE.TRD_LOSS := 0; -- 매매손실              
-    T_BOND_BALANCE.BTRM_EVAL_PRFT := 0; -- 전기평가이익          
-    T_BOND_BALANCE.BTRM_EVAL_LOSS := 0; -- 전기평가손실          
-    T_BOND_BALANCE.EVAL_PRICE := 0; -- 평가단가              
-    T_BOND_BALANCE.EVAL_AMT := 0; -- 평가금액              
-    T_BOND_BALANCE.TOT_EVAL_PRFT := 0; -- 누적평가이익          
-    T_BOND_BALANCE.TOT_EVAL_LOSS := 0; -- 누적평가손실          
-    T_BOND_BALANCE.TTRM_EVAL_PRFT := 0; -- 당기평가이익          
-    T_BOND_BALANCE.TTRM_EVAL_LOSS := 0; -- 당기평가손실          
-    T_BOND_BALANCE.AQST_QTY := 0; -- 인수수량              
-    T_BOND_BALANCE.DRT_SELL_QTY := 0; -- 직매도수량            
-    T_BOND_BALANCE.DRT_BUY_QTY := T_TRD_QTY; -- 직매수수량            
-    T_BOND_BALANCE.TXSTD_AMT := 0; -- 과표금액              
-    T_BOND_BALANCE.CORP_TAX := 0; -- 선급법인세            
-    T_BOND_BALANCE.UNPAID_CORP_TAX := 0; -- 미지급법인세          
+    T_BOND_BALANCE.BOND_IR         := I_EVENT_INFO.IR;                                -- IR
+    T_BOND_BALANCE.BOND_EIR        := I_EVENT_INFO.EIR;                               -- EIR
+    T_BOND_BALANCE.TOT_QTY         := T_TRD_QTY;                                      -- 총잔고수량
+    T_BOND_BALANCE.TDY_AVAL_QTY    := T_TRD_QTY;                                      -- 당일가용수량
+    T_BOND_BALANCE.NDY_AVAL_QTY    := T_TRD_QTY;                                      -- 익일가용수량
+    T_BOND_BALANCE.BOOK_AMT        := T_BOOK_AMT;                                     -- 장부금액
+    T_BOND_BALANCE.BOOK_PRC_AMT    := T_BOOK_PRC_AMT;                                 -- 장부원가
+    T_BOND_BALANCE.ACCRUED_INT     := I_ACCRUED_INT;                                  -- 경과이자
+    T_BOND_BALANCE.BTRM_UNPAID_INT := 0;                                              -- 전기미수이자
+    T_BOND_BALANCE.TTRM_BOND_INT   := 0;                                              -- 당기채권이자
+    T_BOND_BALANCE.SANGGAK_AMT     := 0;                                              -- 상각금액(상각이자)
+    T_BOND_BALANCE.MI_SANGGAK_AMT  := T_MI_SANGGAK_AMT;                               -- 미상각금액(미상각이자)
+    T_BOND_BALANCE.TRD_PRFT        := 0;                                              -- 매매이익
+    T_BOND_BALANCE.TRD_LOSS        := 0;                                              -- 매매손실
+    T_BOND_BALANCE.BTRM_EVAL_PRFT  := 0;                                              -- 전기평가이익
+    T_BOND_BALANCE.BTRM_EVAL_LOSS  := 0;                                              -- 전기평가손실
+    T_BOND_BALANCE.EVAL_PRICE      := 0;                                              -- 평가단가
+    T_BOND_BALANCE.EVAL_AMT        := 0;                                              -- 평가금액
+    T_BOND_BALANCE.TOT_EVAL_PRFT   := 0;                                              -- 누적평가이익
+    T_BOND_BALANCE.TOT_EVAL_LOSS   := 0;                                              -- 누적평가손실
+    T_BOND_BALANCE.TTRM_EVAL_PRFT  := 0;                                              -- 당기평가이익
+    T_BOND_BALANCE.TTRM_EVAL_LOSS  := 0;                                              -- 당기평가손실
+    T_BOND_BALANCE.AQST_QTY        := 0;                                              -- 인수수량
+    T_BOND_BALANCE.DRT_SELL_QTY    := 0;                                              -- 직매도수량
+    T_BOND_BALANCE.DRT_BUY_QTY     := T_TRD_QTY;                                      -- 직매수수량
+    T_BOND_BALANCE.TXSTD_AMT       := 0;                                              -- 과표금액
+    T_BOND_BALANCE.CORP_TAX        := 0;                                              -- 선급법인세
+    T_BOND_BALANCE.UNPAID_CORP_TAX := 0;                                              -- 미지급법인세    
+    
     
     -- COMMIT
     INSERT INTO ISS.BOND_BALANCE VALUES T_BOND_BALANCE;
@@ -683,46 +684,47 @@ CREATE OR REPLACE PACKAGE BODY ISS.PKG_EIR_TKP_S AS
     
     /* 거래내역 TABLE */
      -- PK
-    T_BOND_TRADE.TRD_DATE := I_EVENT_INFO.EVENT_DATE; -- 거래일자
-    T_BOND_TRADE.TRD_SEQ := PKG_EIR_TKP_S.FN_GET_TRD_SEQ(I_EVENT_INFO); -- 거래일련번호
+    T_BOND_TRADE.TRD_DATE            := I_EVENT_INFO.EVENT_DATE;                    -- 거래일자
+    T_BOND_TRADE.TRD_SEQ             := PKG_EIR_TKP_S.FN_GET_TRD_SEQ(I_EVENT_INFO); -- 거래일련번호
     
     -- VALUE
-    T_BOND_TRADE.FUND_CODE := T_BOND_BALANCE.FUND_CODE; -- 펀드코드        
-    T_BOND_TRADE.BOND_CODE := T_BOND_BALANCE.BOND_CODE; -- 종목코드        
-    T_BOND_TRADE.BUY_DATE := T_BOND_BALANCE.BUY_DATE; -- 매수일자        
-    T_BOND_TRADE.BUY_PRICE := T_BOND_BALANCE.BUY_PRICE; -- 매수단가        
-    T_BOND_TRADE.BALAN_SEQ := T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호    
-    T_BOND_TRADE.TRD_TYPE_CD := '2'; -- 매매유형코드(1.인수, 2.직매수, 3.직매도, 4.상환)
-    T_BOND_TRADE.GOODS_BUY_SELL_SECT := '1'; -- 상품매수매도구분(1.상품매수, 2.상품매도)
-    T_BOND_TRADE.STT_TERM_SECT := '0'; -- 결제기간구분(0.당일, 1.익일, 2.선도(지정일))
-    T_BOND_TRADE.SETL_DATE := I_EIR_C.EVENT_DATE; -- 결제일자        
-    T_BOND_TRADE.EXPR_DATE := I_EIR_C.EXPIRE_DATE; -- 만기일자        
-    T_BOND_TRADE.TRD_PRICE := T_TRD_PRICE; -- 매매단가        
-    T_BOND_TRADE.TRD_QTY := T_TRD_QTY; -- 매매수량        
-    T_BOND_TRADE.TRD_FACE_AMT := T_TRD_FACE_AMT; -- 매매액면        
-    T_BOND_TRADE.TRD_AMT := T_TRD_AMT; -- 매매금액        
-    T_BOND_TRADE.TRD_NET_AMT := T_BOOK_AMT; -- 매매정산금액    
-    T_BOND_TRADE.TOT_INT := I_ACCRUED_INT; -- 총이자금액      
-    T_BOND_TRADE.ACCRUED_INT := I_ACCRUED_INT; -- 경과이자        
-    T_BOND_TRADE.BTRM_UNPAID_INT := 0; -- 전기미수이자    
-    T_BOND_TRADE.TTRM_BOND_INT := 0; -- 당기채권이자    
-    T_BOND_TRADE.TOT_DCNT := 0; -- 총일수          
-    T_BOND_TRADE.SRV_DCNT := 0; -- 잔존일수        
-    T_BOND_TRADE.LPCNT := 0; -- 경과일수        
-    T_BOND_TRADE.HOLD_DCNT := 0; -- 보유일수        
-    T_BOND_TRADE.BOND_EIR := I_EVENT_INFO.EIR; -- 유효이자율      
-    T_BOND_TRADE.BOND_IR := I_EVENT_INFO.IR; -- 표면이자율      
-    T_BOND_TRADE.SANGGAK_AMT := 0; -- 상각금액        
-    T_BOND_TRADE.MI_SANGGAK_AMT := 0; -- 미상각금액      
-    T_BOND_TRADE.BOOK_AMT := T_BOOK_AMT; -- 장부금액        
-    T_BOND_TRADE.BOOK_PRC_AMT := T_BOOK_PRC_AMT; -- 장부원가        
-    T_BOND_TRADE.TRD_PRFT := 0; -- 매매이익        
-    T_BOND_TRADE.TRD_LOSS := 0; -- 매매손실        
-    T_BOND_TRADE.BTRM_EVAL_PRFT := 0; -- 전기평가이익    
-    T_BOND_TRADE.BTRM_EVAL_LOSS := 0; -- 전기평가손실    
-    T_BOND_TRADE.TXSTD_AMT := 0; -- 과표금액        
-    T_BOND_TRADE.CORP_TAX := 0; -- 선급법인세      
-    T_BOND_TRADE.UNPAID_CORP_TAX := 0; -- 미지급법인세    
+    T_BOND_TRADE.FUND_CODE           := T_BOND_BALANCE.FUND_CODE;                   -- 펀드코드
+    T_BOND_TRADE.BOND_CODE           := T_BOND_BALANCE.BOND_CODE;                   -- 종목코드
+    T_BOND_TRADE.BUY_DATE            := T_BOND_BALANCE.BUY_DATE;                    -- 매수일자
+    T_BOND_TRADE.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                   -- 매수단가
+    T_BOND_TRADE.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                   -- 잔고일련번호
+    T_BOND_TRADE.TRD_TYPE_CD         := '2';                                        -- 매매유형코드(1.인수,2.직매수,3.직매도,4.상환)
+    T_BOND_TRADE.GOODS_BUY_SELL_SECT := '1';                                        -- 상품매수매도구분(1.상품매수,2.상품매도)
+    T_BOND_TRADE.STT_TERM_SECT       := '0';                                        -- 결제기간구분(0.당일,1.익일,2.선도(지정일))
+    T_BOND_TRADE.SETL_DATE           := I_EIR_C.EVENT_DATE;                         -- 결제일자
+    T_BOND_TRADE.EXPR_DATE           := I_EIR_C.EXPIRE_DATE;                        -- 만기일자
+    T_BOND_TRADE.TRD_PRICE           := T_TRD_PRICE;                                -- 매매단가
+    T_BOND_TRADE.TRD_QTY             := T_TRD_QTY;                                  -- 매매수량
+    T_BOND_TRADE.TRD_FACE_AMT        := T_TRD_FACE_AMT;                             -- 매매액면
+    T_BOND_TRADE.TRD_AMT             := T_TRD_AMT;                                  -- 매매금액
+    T_BOND_TRADE.TRD_NET_AMT         := T_BOOK_AMT;                                 -- 매매정산금액
+    T_BOND_TRADE.TOT_INT             := I_ACCRUED_INT;                              -- 총이자금액
+    T_BOND_TRADE.ACCRUED_INT         := I_ACCRUED_INT;                              -- 경과이자
+    T_BOND_TRADE.BTRM_UNPAID_INT     := 0;                                          -- 전기미수이자
+    T_BOND_TRADE.TTRM_BOND_INT       := 0;                                          -- 당기채권이자
+    T_BOND_TRADE.TOT_DCNT            := 0;                                          -- 총일수
+    T_BOND_TRADE.SRV_DCNT            := 0;                                          -- 잔존일수
+    T_BOND_TRADE.LPCNT               := 0;                                          -- 경과일수
+    T_BOND_TRADE.HOLD_DCNT           := 0;                                          -- 보유일수
+    T_BOND_TRADE.BOND_EIR            := I_EVENT_INFO.EIR;                           -- 유효이자율
+    T_BOND_TRADE.BOND_IR             := I_EVENT_INFO.IR;                            -- 표면이자율
+    T_BOND_TRADE.SANGGAK_AMT         := 0;                                          -- 상각금액
+    T_BOND_TRADE.MI_SANGGAK_AMT      := 0;                                          -- 미상각금액
+    T_BOND_TRADE.BOOK_AMT            := T_BOOK_AMT;                                 -- 장부금액
+    T_BOND_TRADE.BOOK_PRC_AMT        := T_BOOK_PRC_AMT;                             -- 장부원가
+    T_BOND_TRADE.TRD_PRFT            := 0;                                          -- 매매이익
+    T_BOND_TRADE.TRD_LOSS            := 0;                                          -- 매매손실
+    T_BOND_TRADE.BTRM_EVAL_PRFT      := 0;                                          -- 전기평가이익
+    T_BOND_TRADE.BTRM_EVAL_LOSS      := 0;                                          -- 전기평가손실
+    T_BOND_TRADE.TXSTD_AMT           := 0;                                          -- 과표금액
+    T_BOND_TRADE.CORP_TAX            := 0;                                          -- 선급법인세
+    T_BOND_TRADE.UNPAID_CORP_TAX     := 0;                                          -- 미지급법인세
+    
     
     --COMMIT
     INSERT INTO ISS.BOND_TRADE VALUES T_BOND_TRADE;

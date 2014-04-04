@@ -132,9 +132,9 @@ BEGIN
   
   -- 잔고수량 RULE
   -- 1.당일(매수 100)
-  --   총잔고수량 = 100, 당일잔고수량 = 100, 익일잔고수량 = 100;
+  --   ex)총잔고수량 = 100, 당일잔고수량 = 100, 익일잔고수량 = 100;
   -- 2.익일(매수 100)
-  --   총잔고수량 = 100, 당일잔고수량 =   0, 익일잔고수량 = 100;
+  --   ex)총잔고수량 = 100, 당일잔고수량 =   0, 익일잔고수량 = 100;
   IF I_BOND_TRADE.STT_TERM_SECT = '1' THEN
     T_BOND_BALANCE.TOT_QTY        := T_BOND_TRADE.TRD_QTY;        -- 총잔고수량
     T_BOND_BALANCE.TDY_AVAL_QTY   := T_BOND_TRADE.TRD_QTY;        -- 당일가용수량

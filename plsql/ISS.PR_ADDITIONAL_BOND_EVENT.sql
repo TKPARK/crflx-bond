@@ -3,9 +3,9 @@ CREATE OR REPLACE PROCEDURE ISS.PR_ADDITIONAL_BOND_EVENT (
   I_BOND_TRADE IN OUT BOND_TRADE%ROWTYPE  -- ROWTYPE : 거래내역
 ) IS
   --
-  T_BOND_BALANCE BOND_BALANCE%ROWTYPE;    -- ROWTYPE : 매도후 잔고
+  T_BOND_BALANCE    BOND_BALANCE%ROWTYPE; -- ROWTYPE : 매도후 잔고
   T_BF_BOND_BALANCE BOND_BALANCE%ROWTYPE; -- ROWTYPE : 매도전 잔고
-  T_EVENT_INFO   EVENT_INFO_TYPE;         -- TYPE : EVENT_INFO_TYPE
+  T_EVENT_INFO      EVENT_INFO_TYPE;      -- TYPE : EVENT_INFO_TYPE
 BEGIN
   ----------------------------------------------------------------------------------------------------
   -- 1)입력값 검증(INPUT 필드)
@@ -116,7 +116,6 @@ BEGIN
   I_BOND_TRADE.ACCRUED_INT     := T_EVENT_RESULT.ACCRUED_INT;                                -- 경과이자
   I_BOND_TRADE.BTRM_UNPAID_INT := ;                                                          -- 전기미수이자
   I_BOND_TRADE.TTRM_BOND_INT   := ;                                                          -- 당기채권이자
-  
   
   I_BOND_TRADE.TRD_FACE_AMT    := I_BOND_TRADE.TRD_QTY * 1000;                               -- 매매액면(수량 * 1000)
   I_BOND_TRADE.TRD_AMT         := TRUNC(I_BOND_TRADE.TRD_PRICE * I_BOND_TRADE.TRD_QTY / 10); -- 매매금액(수량 * 단가 / 10)

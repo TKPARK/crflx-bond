@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION ISS.FN_INIT_BOND_TRADE
-  RETURN BOND_BALANCE%ROWTYPE AS
+  RETURN BOND_TRADE%ROWTYPE AS
   T_BOND_TRADE BOND_TRADE%ROWTYPE;
 BEGIN
   T_BOND_TRADE.TRD_DATE            := ''; -- 거래일자
@@ -14,6 +14,8 @@ BEGIN
   T_BOND_TRADE.STT_TERM_SECT       := ''; -- 결제기간구분(1.당일, 2.익일)
   T_BOND_TRADE.SETL_DATE           := ''; -- 결제일자
   T_BOND_TRADE.EXPR_DATE           := ''; -- 만기일자
+  T_BOND_TRADE.EVENT_DATE          := ''; -- 이벤트일 (PK)
+  T_BOND_TRADE.EVENT_SEQ           := 0;  -- 이벤트 SEQ
   T_BOND_TRADE.TRD_PRICE           := 0;  -- 매매단가
   T_BOND_TRADE.TRD_QTY             := 0;  -- 매매수량
   T_BOND_TRADE.TRD_FACE_AMT        := 0;  -- 매매액면

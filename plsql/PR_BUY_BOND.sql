@@ -2,7 +2,12 @@ CREATE OR REPLACE PROCEDURE ISS.PR_BUY_BOND (
   I_BUY_INFO   IN  BUY_INFO_TYPE_S                   -- TYPE    : 매수정보
 , O_BOND_TRADE OUT BOND_TRADE%ROWTYPE                -- ROWTYPE : 거래내역
 ) IS
-  --
+  -- CURSOR
+  CURSOR C_BOND_INFO_CUR IS
+    SELECT *
+      FROM BOND_INFO
+     WHERE BOND_CODE = I_BUY_INFO.BOND_CODE;
+  -- TYPE
   T_EVENT_INFO   PKG_EIR_NESTED_NSC.EVENT_INFO_TYPE; -- TYPE    : 매수이벤트 INPUT
   T_EVENT_RESULT EVENT_RESULT_NESTED_S%ROWTYPE;      -- ROWTYPE : 매수이벤트 OUTPUT
   T_BOND_BALANCE BOND_BALANCE%ROWTYPE;               -- ROWTYPE : 잔고
@@ -35,7 +40,20 @@ BEGIN
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 2)변수초기화
+  -- 2)종목 확인
+  ----------------------------------------------------------------------------------------------------
+  OPEN C_BOND_INFO_CUR;
+  FETCH C_BOND_INFO_CUR INTO T_BOND_INFO;
+  IF C_BOND_INFO_CUR%NOTFOUND THEN
+    CLOSE C_BOND_INFO_CUR;
+    RAISE_APPLICATION_ERROR(-20011, '종목 오류');
+  END IF;
+  CLOSE C_BOND_INFO_CUR;
+  
+  
+  
+  ----------------------------------------------------------------------------------------------------
+  -- 3)변수초기화
   --   * Object들을 초기화 및 Default값으로 설정함
   --   * 거래내역, 잔고 TABLE SEQ 채번
   ----------------------------------------------------------------------------------------------------
@@ -44,20 +62,6 @@ BEGIN
   O_BOND_TRADE   := FN_INIT_BOND_TRADE();
   T_BOND_BALANCE := FN_INIT_BOND_BALANCE();
   T_BOND_INFO    := FN_INIT_BOND_INFO();
-  
-  -- 종목 조회
-  FOR C1 IN (SELECT *
-               FROM BOND_INFO
-              WHERE BOND_CODE = I_BUY_INFO.BOND_CODE)
-  LOOP
-    T_BOND_INFO := C1;
-    EXIT;
-  END LOOP;
-  
-  IF T_BOND_INFO.BOND_CODE = '' THEN
-    PCZ_RAISE(-20999, '종목 오류');
-  END IF;
-  
   
   -- 거래일련번호 채번
   SELECT NVL(MAX(TRD_SEQ), 0) + 1 AS TRD_SEQ
@@ -75,20 +79,10 @@ BEGIN
      AND BUY_DATE  = I_BUY_INFO.TRD_DATE
      AND BUY_PRICE = I_BUY_INFO.BUY_PRICE;
   
-  -- 결제일자 RULE //
-  -- 1.당일 : 결제일자 = 매수일자
-  -- 2.익일 : 결제일자 = 매수일자 + 1일
-  IF I_BUY_INFO.STL_DT_TP = '1' THEN
-    O_BOND_TRADE.SETL_DATE := I_BUY_INFO.TRD_DATE;
-  ELSIF I_BUY_INFO.STL_DT_TP = '2' THEN
-    O_BOND_TRADE.SETL_DATE := TO_CHAR((TO_DATE(I_BUY_INFO.TRD_DATE, 'YYYYMMDD')+1), 'YYYYMMDD');
-  END IF;
-  -- // END
-  
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 3)매수 이벤트 처리 프로시져 호출
+  -- 4)매수 이벤트 처리 프로시져 호출
   --   * INPUT 설정
   --   * 경과이자, 현금흐름 생성, EIR산출, 상각표 생성 처리
   ----------------------------------------------------------------------------------------------------
@@ -97,19 +91,19 @@ BEGIN
   T_EVENT_INFO.BUY_DATE   := I_BUY_INFO.TRD_DATE;    -- 매수일자(채권잔고의PK)
   T_EVENT_INFO.BUY_PRICE  := I_BUY_INFO.BUY_PRICE;   -- 매수단가(채권잔고의PK)
   T_EVENT_INFO.BALAN_SEQ  := O_BOND_TRADE.BALAN_SEQ; -- 잔고일련번호(채권잔고의PK)
-  T_EVENT_INFO.EVENT_DATE := O_BOND_TRADE.SETL_DATE; -- 이벤트일
+  T_EVENT_INFO.EVENT_DATE := O_BOND_TRADE.TRD_DATE;  -- 이벤트일
   T_EVENT_INFO.EVENT_TYPE := '1';                    -- Event종류(1.매수,2.매도,3.금리변동,4.손상,5.회복)
   T_EVENT_INFO.DL_UV      := I_BUY_INFO.BUY_PRICE;   -- 거래단가
   T_EVENT_INFO.DL_QT      := I_BUY_INFO.BUY_QTY;     -- 거래수량
   T_EVENT_INFO.STL_DT_TP  := I_BUY_INFO.STL_DT_TP;   -- 결제일구분(1.당일,2.익일)
   T_EVENT_INFO.IR         := I_BUY_INFO.BOND_IR;     -- 표면이자율
   
-  PKG_EIR_NESTED_NSC.PR_NEW_BUY_EVENT(T_EVENT_INFO, T_EVENT_RESULT);
+  --PKG_EIR_NESTED_NSC.PR_NEW_BUY_EVENT(T_EVENT_INFO, T_EVENT_RESULT);
   
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 4)거래내역 등록(기준정보 계산)
+  -- 5)거래내역 등록(기준정보 계산)
   --   * T_EVENT_RESULT 데이터를 가지고 기준정보 설정
   --   * 기준정보에 필요한 조회 및 계산 로직 등을 구현
   ----------------------------------------------------------------------------------------------------
@@ -121,6 +115,18 @@ BEGIN
   O_BOND_TRADE.TRD_TYPE_CD         := '2';                                                   -- 매매유형코드(1.인수,2.직매수,3.직매도,4.상환)
   O_BOND_TRADE.GOODS_BUY_SELL_SECT := '1';                                                   -- 상품매수매도구분(1.상품매수,2.상품매도)
   O_BOND_TRADE.STT_TERM_SECT       := I_BUY_INFO.STL_DT_TP;                                  -- 결제기간구분(0.당일,1.익일)
+  
+  -- 결제일자 RULE //
+  -- 1.당일 : 결제일자 = 매수일자
+  -- 2.익일 : 결제일자 = 영업일 계산 모듈로 처리
+  IF I_BUY_INFO.STL_DT_TP = '1' THEN
+    O_BOND_TRADE.SETL_DATE := I_BUY_INFO.TRD_DATE;
+  ELSIF I_BUY_INFO.STL_DT_TP = '2' THEN
+    -- 영업일 계산 모듈로 처리
+    O_BOND_TRADE.SETL_DATE := TO_CHAR(TO_DATE(I_BUY_INFO.TRD_DATE, 'YYYYMMDD')+1), 'YYYYMMDD');
+  END IF;
+  -- // END
+  
   O_BOND_TRADE.EXPR_DATE           := T_BOND_INFO.EXPIRE_DATE;                               -- 만기일자
   O_BOND_TRADE.EVENT_DATE          := T_EVENT_RESULT.EVENT_DATE;                             -- 이벤트일
   O_BOND_TRADE.EVENT_SEQ           := T_EVENT_RESULT.EVENT_SEQ;                              -- 이벤트 SEQ
@@ -141,7 +147,7 @@ BEGIN
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 5)잔고 등록
+  -- 6)잔고 등록
   ----------------------------------------------------------------------------------------------------
   T_BOND_BALANCE.BIZ_DATE       := O_BOND_TRADE.TRD_DATE;         -- 영업일자(PK)
   T_BOND_BALANCE.FUND_CODE      := O_BOND_TRADE.FUND_CODE;        -- 펀드코드(PK)

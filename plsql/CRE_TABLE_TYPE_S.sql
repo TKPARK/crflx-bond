@@ -12,7 +12,7 @@ CREATE OR REPLACE TYPE BUY_INFO_TYPE_S AS OBJECT (
 
 -- SELL INFO TYPE
 CREATE OR REPLACE TYPE SELL_INFO_TYPE_S AS OBJECT (
-  TRD_DATE   CHAR(8)    -- 영업일자(잔고 PK)
+  TRD_DATE   CHAR(8)    -- 거래일자(잔고 PK)
 , FUND_CODE  CHAR(10)   -- 펀드코드(잔고 PK)
 , BOND_CODE  CHAR(12)   -- 종목코드(잔고 PK)
 , BUY_DATE   CHAR(8)    -- 매수일자(잔고 PK)

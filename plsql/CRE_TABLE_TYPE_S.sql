@@ -6,28 +6,27 @@ CREATE OR REPLACE TYPE BUY_INFO_TYPE_S AS OBJECT (
 , BUY_PRICE  NUMBER(22)    -- 매수단가
 , BUY_QTY    NUMBER(22)    -- 매수수량
 , BOND_IR    NUMBER(15,12) -- 표면이자율
-, EVENT_TYPE CHAR(1)       -- Event 종류(1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복)
 , STL_DT_TP  CHAR(1)       -- 결제일구분(1.당일, 2.익일)
 );
 /
 
 -- SELL INFO TYPE
 CREATE OR REPLACE TYPE SELL_INFO_TYPE_S AS OBJECT (
-  BIZ_DATE  CHAR(8)     -- 영업일자(잔고 PK)
-, FUND_CODE CHAR(10)    -- 펀드코드(잔고 PK)
-, BOND_CODE CHAR(12)    -- 종목코드(잔고 PK)
-, BUY_DATE  CHAR(8)     -- 매수일자(잔고 PK)
-, BUY_PRICE NUMBER(13)  -- 매수단가(잔고 PK)
-, BALAN_SEQ NUMBER(13)  -- 잔고일련번호(잔고 PK)
-, SELL_DATE  CHAR(8)    -- 매도일자
+  TRD_DATE   CHAR(8)    -- 영업일자(잔고 PK)
+, FUND_CODE  CHAR(10)   -- 펀드코드(잔고 PK)
+, BOND_CODE  CHAR(12)   -- 종목코드(잔고 PK)
+, BUY_DATE   CHAR(8)    -- 매수일자(잔고 PK)
+, BUY_PRICE  NUMBER(13) -- 매수단가(잔고 PK)
+, BALAN_SEQ  NUMBER(13) -- 잔고일련번호(잔고 PK)
 , SELL_PRICE NUMBER(22) -- 매도단가
 , SELL_QTY   NUMBER(22) -- 매도수량
+, STL_DT_TP  CHAR(1)    -- 결제일구분(1.당일, 2.익일)
 );
 /
 
 -- EVENT INFO TYPE
 CREATE OR REPLACE TYPE ISS.EVENT_INFO_TYPE_S AS OBJECT (
-    FUND_CODE      CHAR(10)       -- 펀드코드 (채권잔고의 PK)
+    FUND_CODE      CHAR(10)      -- 펀드코드 (채권잔고의 PK)
    ,BOND_CODE      CHAR(12)      -- 종목코드(채권잔고의 PK) 
    ,BUY_DATE       CHAR(8)       -- Buy Date (채권잔고의 PK) 
    ,BUY_PRICE      NUMBER(13)    -- 매수단가 (채권잔고의 PK)

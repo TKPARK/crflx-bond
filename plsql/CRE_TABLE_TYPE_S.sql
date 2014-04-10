@@ -24,6 +24,14 @@ CREATE OR REPLACE TYPE SELL_INFO_TYPE_S AS OBJECT (
 );
 /
 
+-- CANCEL INFO TYPE
+CREATE OR REPLACE TYPE CANCEL_INFO_TYPE_S AS OBJECT (
+  TRD_DATE   CHAR(8)    -- 거래일자(거래내역 PK)
+, TRD_SEQ    NUMBER(13) -- 거래일련번호(거래내역 PK)
+, EVENT_TYPE CHAR(1)    -- Event 종류(1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복)
+);
+/
+
 -- EVENT INFO TYPE
 CREATE OR REPLACE TYPE ISS.EVENT_INFO_TYPE_S AS OBJECT (
     FUND_CODE      CHAR(10)      -- 펀드코드 (채권잔고의 PK)
@@ -33,7 +41,7 @@ CREATE OR REPLACE TYPE ISS.EVENT_INFO_TYPE_S AS OBJECT (
    ,BALAN_SEQ      NUMBER(13)    -- 잔고일련번호(채권잔고의 PK)             
    ,EVENT_DATE     CHAR(8)       -- 이벤트일 (PK)
    ,EVENT_SEQ      NUMBER        -- 이벤트SEQ(PK)
-   ,EVENT_TYPE     CHAR(1)       -- Event 종류: 1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복 
+   ,EVENT_TYPE     CHAR(1)       -- Event 종류(1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복)
    ,DL_UV          NUMBER(20)    -- 거래단가
    ,DL_QT          NUMBER(20)    -- 거래수량
    ,STL_DT_TP      CHAR(1)       -- 결제일구분(1.당일, 2.익일)

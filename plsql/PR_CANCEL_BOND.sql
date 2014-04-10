@@ -2,28 +2,29 @@ CREATE OR REPLACE PROCEDURE ISS.PR_CANCEL_BOND (
   I_CANCEL_INFO IN  CANCEL_INFO_TYPE_S         -- TYPE    : 취소정보
 , O_BOND_TRADE  OUT BOND_TRADE%ROWTYPE         -- ROWTYPE : 거래내역
 ) IS
+  -- TYPE
+  T_EVENT_INFO       PKG_EIR_NESTED_NSC.EVENT_INFO_TYPE; -- TYPE    : 이벤트 INPUT
+  T_EVENT_RESULT     EVENT_RESULT_NESTED_S%ROWTYPE;      -- ROWTYPE : 이벤트 OUTPUT
+  T_BOND_BALANCE     BOND_BALANCE%ROWTYPE;               -- ROWTYPE : 잔고
+  T_ORGN_BOND_TRADE  BOND_TRADE%ROWTYPE;                 -- ROWTYPE : 원거래내역
+  
   -- CURSOR : 원거래내역
   CURSOR C_ORGN_BOND_TRADE_CUR IS
     SELECT *
       FROM BOND_TRADE
-     WHERE TRD_DATE = I_CANCEL_INFO.TRD_DATE   -- 거래일자(거래내역 PK)
-       AND TRD_SEQ  = I_CANCEL_INFO.TRD_SEQ;   -- 거래일련번호(거래내역 PK)
+     WHERE TRD_DATE = I_CANCEL_INFO.TRD_DATE       -- 거래일자(거래내역 PK)
+       AND TRD_SEQ  = I_CANCEL_INFO.TRD_SEQ;       -- 거래일련번호(거래내역 PK)
   -- CURSOR : 잔고
   CURSOR C_BOND_BALANCE_CUR IS
     SELECT *
       FROM BOND_BALANCE
-     WHERE BIZ_DATE  = I_SELL_INFO.TRD_DATE    -- 거래일자(잔고 PK)
-       AND FUND_CODE = I_SELL_INFO.FUND_CODE   -- 펀드코드(잔고 PK)
-       AND BOND_CODE = I_SELL_INFO.BOND_CODE   -- 종목코드(잔고 PK)
-       AND BUY_DATE  = I_SELL_INFO.BUY_DATE    -- 매수일자(잔고 PK)
-       AND BUY_PRICE = I_SELL_INFO.BUY_PRICE   -- 매수단가(잔고 PK)
-       AND BALAN_SEQ = I_SELL_INFO.BALAN_SEQ   -- 잔고일련번호(잔고 PK)
+     WHERE BIZ_DATE  = T_ORGN_BOND_TRADE.TRD_DATE  -- 거래일자(잔고 PK)
+       AND FUND_CODE = T_ORGN_BOND_TRADE.FUND_CODE -- 펀드코드(잔고 PK)
+       AND BOND_CODE = T_ORGN_BOND_TRADE.BOND_CODE -- 종목코드(잔고 PK)
+       AND BUY_DATE  = T_ORGN_BOND_TRADE.BUY_DATE  -- 매수일자(잔고 PK)
+       AND BUY_PRICE = T_ORGN_BOND_TRADE.BUY_PRICE -- 매수단가(잔고 PK)
+       AND BALAN_SEQ = T_ORGN_BOND_TRADE.BALAN_SEQ -- 잔고일련번호(잔고 PK)
        FOR UPDATE;
-  -- TYPE
-  T_EVENT_INFO      PKG_EIR_NESTED_NSC.EVENT_INFO_TYPE; -- TYPE    : 이벤트 INPUT
-  T_EVENT_RESULT    EVENT_RESULT_NESTED_S%ROWTYPE;      -- ROWTYPE : 이벤트 OUTPUT
-  T_BOND_BALANCE    BOND_BALANCE%ROWTYPE;               -- ROWTYPE : 잔고
-  T_ORGN_BOND_TRADE BOND_TRADE%ROWTYPE;                 -- ROWTYPE : 원거래내역
 BEGIN
   ----------------------------------------------------------------------------------------------------
   -- 1)입력값 검증(INPUT 필드)
@@ -82,7 +83,7 @@ BEGIN
   ----------------------------------------------------------------------------------------------------
   -- 4)취소 처리 프로시져 호출
   --   * INPUT 설정
-  --   * 
+  --   * EVENT_RESULT 테이블 원거래내역 삭제
   ----------------------------------------------------------------------------------------------------
   T_EVENT_INFO.FUND_CODE  := T_BOND_BALANCE.FUND_CODE; -- 펀드코드(잔고 PK)
   T_EVENT_INFO.BOND_CODE  := T_BOND_BALANCE.BOND_CODE; -- 종목코드(잔고 PK)
@@ -155,14 +156,13 @@ BEGIN
   -- 6)원거래내역 취소처리
   --   * 취소여부 필드값 세팅
   ----------------------------------------------------------------------------------------------------
-  
+  T_ORGN_BOND_TRADE.CANCEL_YN := 'Y'; -- 취소여부
   
   -- UPDATE : 취소처리
   UPDATE BOND_TRADE 
      SET ROW = T_ORGN_BOND_TRADE
    WHERE TRD_DATE = T_ORGN_BOND_TRADE.TRD_DATE -- 거래일자(거래내역 PK)
      AND TRD_SEQ  = T_ORGN_BOND_TRADE.TRD_SEQ; -- 거래일련번호(거래내역 PK)
-  
   
   
   
@@ -175,12 +175,12 @@ BEGIN
   SELECT NVL(MAX(TRD_SEQ), 0) + 1 AS TRD_SEQ
     INTO O_BOND_TRADE.TRD_SEQ                           -- 거래일련번호(PK)
     FROM BOND_TRADE
-   WHERE TRD_DATE = I_SELL_INFO.TRD_DATE;
+   WHERE TRD_DATE = I_CANCEL_INFO.TRD_DATE;
   -- // END
   
   O_BOND_TRADE.FUND_CODE  := T_BOND_BALANCE.FUND_CODE;  -- 펀드코드
   O_BOND_TRADE.BOND_CODE  := T_BOND_BALANCE.BOND_CODE;  -- 종목코드
-  O_BOND_TRADE.BUY_DATE   := T_BOND_BALANCE.TRD_DATE;   -- 매수일자
+  O_BOND_TRADE.BUY_DATE   := T_BOND_BALANCE.BUY_DATE;   -- 매수일자
   O_BOND_TRADE.BUY_PRICE  := T_BOND_BALANCE.BUY_PRICE;  -- 매수단가
   O_BOND_TRADE.BALAN_SEQ  := T_BOND_BALANCE.BALAN_SEQ;  -- 잔고일련번호
   

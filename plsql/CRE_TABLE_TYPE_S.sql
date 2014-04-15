@@ -28,7 +28,6 @@ CREATE OR REPLACE TYPE SELL_INFO_TYPE_S AS OBJECT (
 CREATE OR REPLACE TYPE CANCEL_INFO_TYPE_S AS OBJECT (
   TRD_DATE   CHAR(8)    -- 거래일자(거래내역 PK)
 , TRD_SEQ    NUMBER(13) -- 거래일련번호(거래내역 PK)
-, EVENT_TYPE CHAR(1)    -- Event 종류(1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복)
 );
 /
 

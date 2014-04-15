@@ -57,7 +57,7 @@ BEGIN
   --   * Object들을 초기화 및 Default값으로 설정함
   --   * 잔고 TABLE SEQ 채번
   ----------------------------------------------------------------------------------------------------
-  T_EVENT_INFO   := PKG_EIR_NESTED_NSC.FN_INIT_EVENT_INFO();
+  --T_EVENT_INFO   := PKG_EIR_NESTED_NSC.FN_INIT_EVENT_INFO();
   T_EVENT_RESULT := FN_INIT_EVENT_RESULT();
   O_BOND_TRADE   := FN_INIT_BOND_TRADE();
   T_BOND_BALANCE := FN_INIT_BOND_BALANCE();
@@ -73,6 +73,17 @@ BEGIN
      AND BUY_DATE  = I_BUY_INFO.TRD_DATE
      AND BUY_PRICE = I_BUY_INFO.BUY_PRICE;
   
+  -- 결제일자 RULE //
+  -- 1.당일 : 결제일자 = 매수일자
+  -- 2.익일 : 결제일자 = 영업일 계산 모듈로 처리
+  IF I_BUY_INFO.STL_DT_TP = '1' THEN
+    O_BOND_TRADE.SETL_DATE := I_BUY_INFO.TRD_DATE;
+  ELSIF I_BUY_INFO.STL_DT_TP = '2' THEN
+    -- 영업일 계산 모듈로 처리
+    O_BOND_TRADE.SETL_DATE := TO_CHAR(TO_DATE(I_BUY_INFO.TRD_DATE, 'YYYYMMDD')+1, 'YYYYMMDD');
+  END IF;
+  -- // END
+  
   
   
   ----------------------------------------------------------------------------------------------------
@@ -82,14 +93,13 @@ BEGIN
   ----------------------------------------------------------------------------------------------------
   T_EVENT_INFO.FUND_CODE  := I_BUY_INFO.FUND_CODE;   -- 펀드코드(잔고 PK)
   T_EVENT_INFO.BOND_CODE  := I_BUY_INFO.BOND_CODE;   -- 종목코드(잔고 PK)
-  T_EVENT_INFO.BUY_DATE   := I_BUY_INFO.TRD_DATE;    -- 매수일자(잔고 PK)
+  T_EVENT_INFO.BUY_DATE   := O_BOND_TRADE.SETL_DATE; -- 매수일자(잔고 PK)
   T_EVENT_INFO.BUY_PRICE  := I_BUY_INFO.BUY_PRICE;   -- 매수단가(잔고 PK)
   T_EVENT_INFO.BALAN_SEQ  := O_BOND_TRADE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
-  T_EVENT_INFO.EVENT_DATE := I_BUY_INFO.TRD_DATE;    -- 이벤트일
-  T_EVENT_INFO.EVENT_TYPE := '1';                    -- Event종류(1.매수,2.매도,3.금리변동,4.손상,5.회복)
+  T_EVENT_INFO.EVENT_DATE := O_BOND_TRADE.SETL_DATE; -- 이벤트일
+  T_EVENT_INFO.EVENT_TYPE := '1';                    -- Event종류(1.매수, 2.매도(전환), 3.금리변동, 4.손상)
   T_EVENT_INFO.DL_UV      := I_BUY_INFO.BUY_PRICE;   -- 거래단가
   T_EVENT_INFO.DL_QT      := I_BUY_INFO.BUY_QTY;     -- 거래수량
-  T_EVENT_INFO.STL_DT_TP  := I_BUY_INFO.STL_DT_TP;   -- 결제일구분(1.당일,2.익일)
   T_EVENT_INFO.IR         := I_BUY_INFO.BOND_IR;     -- 표면이자율
   
   PKG_EIR_NESTED_NSC.PR_NEW_BUY_EVENT(T_EVENT_INFO, T_EVENT_RESULT);
@@ -118,16 +128,6 @@ BEGIN
   O_BOND_TRADE.GOODS_BUY_SELL_SECT := '1';                                                   -- 상품매수매도구분(1.상품매수,2.상품매도)
   O_BOND_TRADE.STT_TERM_SECT       := I_BUY_INFO.STL_DT_TP;                                  -- 결제기간구분(0.당일,1.익일)
   
-  -- 결제일자 RULE //
-  -- 1.당일 : 결제일자 = 매수일자
-  -- 2.익일 : 결제일자 = 영업일 계산 모듈로 처리
-  IF I_BUY_INFO.STL_DT_TP = '1' THEN
-    O_BOND_TRADE.SETL_DATE := I_BUY_INFO.TRD_DATE;
-  ELSIF I_BUY_INFO.STL_DT_TP = '2' THEN
-    -- 영업일 계산 모듈로 처리
-    O_BOND_TRADE.SETL_DATE := TO_CHAR(TO_DATE(I_BUY_INFO.TRD_DATE, 'YYYYMMDD')+1, 'YYYYMMDD');
-  END IF;
-  -- // END
   
   O_BOND_TRADE.EXPR_DATE           := T_BOND_INFO.EXPIRE_DATE;                               -- 만기일자
   O_BOND_TRADE.EVENT_DATE          := T_EVENT_RESULT.EVENT_DATE;                             -- 이벤트일

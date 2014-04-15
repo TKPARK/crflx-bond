@@ -783,8 +783,8 @@ CREATE OR REPLACE PACKAGE BODY ISS.PKG_EIR_TKP_S AS
     DBMS_OUTPUT.PUT_LINE('--- INSERT(Event 결과정보) ---');
     PKG_EIR_TKP_S.PR_INSERT_EVENT_RESULT_INFO(T_EVENT_INFO, T_CF_LIST, T_SG_LIST);
     
-    DBMS_OUTPUT.PUT_LINE('--- INSERT(잔고) ---');
-    PKG_EIR_TKP_S.PR_INSERT_BOND_BALANCE(T_EVENT_INFO, T_EIR_C, T_ACCRUED_INT);
+    --DBMS_OUTPUT.PUT_LINE('--- INSERT(잔고) ---');
+    --PKG_EIR_TKP_S.PR_INSERT_BOND_BALANCE(T_EVENT_INFO, T_EIR_C, T_ACCRUED_INT);
     
     --DBMS_OUTPUT.PUT_LINE('--- INSERT(거래내역) ---');
     --PKG_EIR_TKP_S.PR_INSERT_BOND_TRADE(T_EVENT_INFO, T_EIR_C, T_ACCRUED_INT);
@@ -807,15 +807,15 @@ CREATE OR REPLACE PACKAGE BODY ISS.PKG_EIR_TKP_S AS
   BEGIN
     DBMS_OUTPUT.PUT_LINE('IN PR_SELL_BOND');
     -- 1. 채권잔고 TABLE 조회
-    FOR C1 IN (SELECT A.*
-                 FROM EVENT_RESULT_N_S_TKP A
-                WHERE A.BOND_CODE = T_EVENT_INFO.BOND_CODE
-                  AND A.BUY_DATE  = T_EVENT_INFO.BUY_DATE
-                ORDER BY A.EVENT_DATE DESC, A.EVENT_SEQ DESC)
-    LOOP
-      T_EVENT_RESULT := C1;
-      EXIT;
-    END LOOP;
+--    FOR C1 IN (SELECT A.*
+--                 FROM EVENT_RESULT_N_S_TKP A
+--                WHERE A.BOND_CODE = T_EVENT_INFO.BOND_CODE
+--                  AND A.BUY_DATE  = T_EVENT_INFO.BUY_DATE
+--                ORDER BY A.EVENT_DATE DESC, A.EVENT_SEQ DESC)
+--    LOOP
+--      T_EVENT_RESULT := C1;
+--      EXIT;
+--    END LOOP;
     
     -- 2. 기존 상각LIST에서 매도일 이전것은 그대로 저장
     FOR IDX IN 1..T_EVENT_RESULT.SGF_LIST.COUNT LOOP
@@ -1048,48 +1048,48 @@ CREATE OR REPLACE PACKAGE BODY ISS.PKG_EIR_TKP_S AS
  FUNCTION FN_GET_EVENT_RESULT_NESTED_STR(I_EV_RET EVENT_RESULT_NESTED_S%ROWTYPE) RETURN VARCHAR2 IS
     V_STR VARCHAR2(1000);
   BEGIN
-    V_STR :=   '채권코드['||I_EV_RET.BOND_CODE||']'      
-             ||'매수일자['||I_EV_RET.BUY_DATE||']'       
-             ||'이벤트일['||I_EV_RET.EVENT_DATE||']'     
-             ||'순번['||I_EV_RET.EVENT_SEQ||']'     
-             ||'이벤트종류['||I_EV_RET.EVENT_TYPE||']'     
-             ||'표면이자율['||LPAD(I_EV_RET.IR, 10)||']'
-             ||'유효이자율['||LPAD(I_EV_RET.EIR,15)||']'
-             ||'매도율['||LPAD(I_EV_RET.SELL_RT, 5)||']'
-             ||'액면금액['||LPAD(I_EV_RET.FACE_AMT,10)||']'
-             ||'장부금액['||LPAD(I_EV_RET.BOOK_AMT,10)||']';
+--    V_STR :=   '채권코드['||I_EV_RET.BOND_CODE||']'      
+--             ||'매수일자['||I_EV_RET.BUY_DATE||']'       
+--             ||'이벤트일['||I_EV_RET.EVENT_DATE||']'     
+--             ||'순번['||I_EV_RET.EVENT_SEQ||']'     
+--             ||'이벤트종류['||I_EV_RET.EVENT_TYPE||']'     
+--             ||'표면이자율['||LPAD(I_EV_RET.IR, 10)||']'
+--             ||'유효이자율['||LPAD(I_EV_RET.EIR,15)||']'
+--             ||'매도율['||LPAD(I_EV_RET.SELL_RT, 5)||']'
+--             ||'액면금액['||LPAD(I_EV_RET.FACE_AMT,10)||']'
+--             ||'장부금액['||LPAD(I_EV_RET.BOOK_AMT,10)||']';
     RETURN V_STR;
   END FN_GET_EVENT_RESULT_NESTED_STR;
   FUNCTION FN_GET_CASH_FLOW_STR(I_CF CF_TYPE_S) RETURN VARCHAR2 IS
     V_STR VARCHAR2(1000);
   BEGIN
-    V_STR :=   '기준일['||I_CF.BASE_DATE||']'
-             ||'액면['||LPAD(I_CF.FACE_AMT,10)||']'
-             ||'총일수['||LPAD(I_CF.TOT_DAYS,10)||']'
-             ||'이자일수['||LPAD(I_CF.INT_DAYS,10)||']'
-             ||'이자금액['||LPAD(I_CF.INT_AMT,10)||']'
-             ||'원금['||LPAD(I_CF.PRC_AMT,10)||']'
-             ||'현재가치['||LPAD(I_CF.CUR_VALUE,10)||']';
+--    V_STR :=   '기준일['||I_CF.BASE_DATE||']'
+--             ||'액면['||LPAD(I_CF.FACE_AMT,10)||']'
+--             ||'총일수['||LPAD(I_CF.TOT_DAYS,10)||']'
+--             ||'이자일수['||LPAD(I_CF.INT_DAYS,10)||']'
+--             ||'이자금액['||LPAD(I_CF.INT_AMT,10)||']'
+--             ||'원금['||LPAD(I_CF.PRC_AMT,10)||']'
+--             ||'현재가치['||LPAD(I_CF.CUR_VALUE,10)||']';
     RETURN V_STR;
   END FN_GET_CASH_FLOW_STR;
   FUNCTION FN_GET_SANGGAK_FLOW_STR(I_SGF SGF_TYPE_S) RETURN VARCHAR2 IS
     V_STR VARCHAR2(1000);
   BEGIN
-    V_STR :=  '기준일['||I_SGF.BASE_DATE||']'       
-            ||'SEQ['||I_SGF.SEQ||']'
-            ||'TYPE['||I_SGF.SANGGAK_TYPE||']'
-            ||'일수['||LPAD(I_SGF.DAYS,4)||']'            
-            ||'액면['||LPAD(I_SGF.FACE_AMT,10)||']'        
-            ||'기초장부['||LPAD(I_SGF.BF_BOOK_AMT,10)||']'     
-            ||'유효이자['||LPAD(I_SGF.EIR_INT_AMT,10)||']'     
-            ||'액면이자['||LPAD(I_SGF.FACE_INT_AMT,10)||']'    
-            ||'상각액['||LPAD(I_SGF.SANGGAK_AMT,10)||']'     
-            ||'기말장부['||LPAD(I_SGF.AF_BOOK_AMT,10)||']'     
-            ||'미상각액['||LPAD(I_SGF.MI_SANGGAK_AMT,10)||']'  
-            ||'기초장부_E['||LPAD(I_SGF.BF_BOOK_AMT_EIR,10)||']' 
-            ||'실이자['||LPAD(I_SGF.REAL_INT_AMT,10)||']'    
-            ||'상각액_E['||LPAD(I_SGF.SANGGAK_AMT_EIR,10)||']' 
-            ||'기말장부_E['||LPAD(I_SGF.AF_BOOK_AMT_EIR,10)||']';
+--    V_STR :=  '기준일['||I_SGF.BASE_DATE||']'       
+--            ||'SEQ['||I_SGF.SEQ||']'
+--            ||'TYPE['||I_SGF.SANGGAK_TYPE||']'
+--            ||'일수['||LPAD(I_SGF.DAYS,4)||']'            
+--            ||'액면['||LPAD(I_SGF.FACE_AMT,10)||']'        
+--            ||'기초장부['||LPAD(I_SGF.BF_BOOK_AMT,10)||']'     
+--            ||'유효이자['||LPAD(I_SGF.EIR_INT_AMT,10)||']'     
+--            ||'액면이자['||LPAD(I_SGF.FACE_INT_AMT,10)||']'    
+--            ||'상각액['||LPAD(I_SGF.SANGGAK_AMT,10)||']'     
+--            ||'기말장부['||LPAD(I_SGF.AF_BOOK_AMT,10)||']'     
+--            ||'미상각액['||LPAD(I_SGF.MI_SANGGAK_AMT,10)||']'  
+--            ||'기초장부_E['||LPAD(I_SGF.BF_BOOK_AMT_EIR,10)||']' 
+--            ||'실이자['||LPAD(I_SGF.REAL_INT_AMT,10)||']'    
+--            ||'상각액_E['||LPAD(I_SGF.SANGGAK_AMT_EIR,10)||']' 
+--            ||'기말장부_E['||LPAD(I_SGF.AF_BOOK_AMT_EIR,10)||']';
      RETURN V_STR;       
   END FN_GET_SANGGAK_FLOW_STR;
   

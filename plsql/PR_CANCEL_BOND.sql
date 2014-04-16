@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE ISS.PR_CANCEL_BOND (
-  I_CANCEL_INFO IN  CANCEL_INFO_TYPE_S         -- TYPE    : 취소정보
-, O_BOND_TRADE  OUT BOND_TRADE%ROWTYPE         -- ROWTYPE : 거래내역
+  I_CANCEL_INFO IN  CANCEL_INFO_TYPE       -- TYPE    : 취소정보
+, O_BOND_TRADE  OUT BOND_TRADE%ROWTYPE     -- ROWTYPE : 거래내역
 ) IS
   -- TYPE
-  T_EVENT_INFO       PKG_EIR_NESTED_NSC.EVENT_INFO_TYPE; -- TYPE    : 이벤트 INPUT
-  T_BOND_BALANCE     BOND_BALANCE%ROWTYPE;               -- ROWTYPE : 잔고
-  T_ORGN_BOND_TRADE  BOND_TRADE%ROWTYPE;                 -- ROWTYPE : 원거래내역
+  T_EVENT_INFO       EVENT_INFO_TYPE;      -- TYPE    : 이벤트 INPUT
+  T_BOND_BALANCE     BOND_BALANCE%ROWTYPE; -- ROWTYPE : 잔고
+  T_ORGN_BOND_TRADE  BOND_TRADE%ROWTYPE;   -- ROWTYPE : 원거래내역
   
   -- CURSOR : 원거래내역
   CURSOR C_ORGN_BOND_TRADE_CUR IS
@@ -46,7 +46,6 @@ BEGIN
   --   * 원거래내역 조회
   --   * 취소여부 확인
   --   * 영업일 확인
-  --   * 과거일자 확인
   ----------------------------------------------------------------------------------------------------
   OPEN C_ORGN_BOND_TRADE_CUR;
     FETCH C_ORGN_BOND_TRADE_CUR INTO T_ORGN_BOND_TRADE;
@@ -62,8 +61,8 @@ BEGIN
   -- 3)변수초기화
   --   * Object들을 초기화 및 Default값으로 설정함
   ----------------------------------------------------------------------------------------------------
-  T_EVENT_INFO   := PKG_EIR_NESTED_NSC.FN_INIT_EVENT_INFO();
-  O_BOND_TRADE   := FN_INIT_BOND_TRADE();
+  PR_INIT_EVENT_INFO(T_EVENT_INFO);
+  PR_INIT_BOND_TRADE(O_BOND_TRADE);
   
   
   
@@ -74,7 +73,7 @@ BEGIN
   ----------------------------------------------------------------------------------------------------
   T_EVENT_INFO.FUND_CODE  := T_ORGN_BOND_TRADE.FUND_CODE; -- 펀드코드(잔고 PK)
   T_EVENT_INFO.BOND_CODE  := T_ORGN_BOND_TRADE.BOND_CODE; -- 종목코드(잔고 PK)
-  T_EVENT_INFO.BUY_DATE   := T_ORGN_BOND_TRADE.BIZ_DATE;  -- 매수일자(잔고 PK)
+  T_EVENT_INFO.BUY_DATE   := T_ORGN_BOND_TRADE.BUY_DATE;  -- 매수일자(잔고 PK)
   T_EVENT_INFO.BUY_PRICE  := T_ORGN_BOND_TRADE.BUY_PRICE; -- 매수단가(잔고 PK)
   T_EVENT_INFO.BALAN_SEQ  := T_ORGN_BOND_TRADE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
   T_EVENT_INFO.EVENT_DATE := T_ORGN_BOND_TRADE.TRD_DATE;  -- 이벤트일
@@ -99,7 +98,7 @@ BEGIN
   CLOSE C_BOND_BALANCE_CUR;
   
   -- 1.매수
-  IF I_CANCEL_INFO.EVENT_TYPE = '1' THEN
+  IF T_ORGN_BOND_TRADE.GOODS_BUY_SELL_SECT = '1' THEN
     -- DELETE : 잔고 삭제
     DELETE FROM BOND_BALANCE
      WHERE BIZ_DATE  = T_BOND_BALANCE.BIZ_DATE   -- 영업일자(잔고 PK)
@@ -110,7 +109,7 @@ BEGIN
        AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
   
   -- 2.매도
-  ELSIF I_CANCEL_INFO.EVENT_TYPE = '2' THEN
+  ELSIF T_ORGN_BOND_TRADE.GOODS_BUY_SELL_SECT = '2' THEN
     /* 매도전 잔고로 복구 */
     
     -- 잔고수량 RULE //

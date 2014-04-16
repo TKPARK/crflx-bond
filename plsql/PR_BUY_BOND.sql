@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE ISS.PR_BUY_BOND (
-  I_BUY_INFO   IN  BUY_INFO_TYPE_S                   -- TYPE    : 매수정보
+  I_BUY_INFO   IN  BUY_INFO_TYPE                     -- TYPE    : 매수정보
 , O_BOND_TRADE OUT BOND_TRADE%ROWTYPE                -- ROWTYPE : 거래내역
 ) IS
   -- TYPE
-  T_EVENT_INFO   PKG_EIR_NESTED_NSC.EVENT_INFO_TYPE; -- TYPE    : 이벤트 INPUT
-  T_EVENT_RESULT EVENT_RESULT_NESTED_S%ROWTYPE;      -- ROWTYPE : 이벤트 OUTPUT
+  T_EVENT_INFO   EVENT_INFO_TYPE;                    -- TYPE    : 이벤트 INPUT
+  T_EVENT_RESULT EVENT_RESULT_EIR%ROWTYPE;           -- ROWTYPE : 이벤트 OUTPUT
   T_BOND_BALANCE BOND_BALANCE%ROWTYPE;               -- ROWTYPE : 잔고
   T_BOND_INFO    BOND_INFO%ROWTYPE;                  -- ROWTYPE : 종목
   
@@ -57,11 +57,11 @@ BEGIN
   --   * Object들을 초기화 및 Default값으로 설정함
   --   * 잔고 TABLE SEQ 채번
   ----------------------------------------------------------------------------------------------------
-  --T_EVENT_INFO   := PKG_EIR_NESTED_NSC.FN_INIT_EVENT_INFO();
-  T_EVENT_RESULT := FN_INIT_EVENT_RESULT();
-  O_BOND_TRADE   := FN_INIT_BOND_TRADE();
-  T_BOND_BALANCE := FN_INIT_BOND_BALANCE();
-  T_BOND_INFO    := FN_INIT_BOND_INFO();  
+  PR_INIT_EVENT_INFO(T_EVENT_INFO);
+  PR_INIT_EVENT_RESULT(T_EVENT_RESULT);
+  PR_INIT_BOND_TRADE(O_BOND_TRADE);
+  PR_INIT_BOND_BALANCE(T_BOND_BALANCE);
+  PR_INIT_BOND_INFO(T_BOND_INFO);
   
   -- 잔고일련번호 채번
   SELECT NVL(MAX(BALAN_SEQ), 0) + 1 AS BALAN_SEQ

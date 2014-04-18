@@ -1,10 +1,10 @@
 DECLARE
-  T_BUY_INFO   BUY_INFO_TYPE_S;    -- INPUT
+  T_BUY_INFO   BUY_INFO_TYPE;    -- INPUT
   T_BOND_TRADE BOND_TRADE%ROWTYPE; -- OUTPUT
 BEGIN
   -- BUY INFO
-  T_BUY_INFO := NEW BUY_INFO_TYPE_S('20121130'   -- 거래일자
-                                  , 'BOND'       -- 펀드코드
+  T_BUY_INFO := NEW BUY_INFO_TYPE('20130516'     -- 거래일자
+                                  , 'KR_FUND'    -- 펀드코드
                                   , 'KR_단리채'  -- 종목코드
                                   , 10623        -- 매수단가
                                   , 100000       -- 매수수량

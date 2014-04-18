@@ -1,0 +1,85 @@
+/*
+ *
+ * 1. System  ID   : SE
+ * 2. Product ID   : SE_00
+ * 3. Service ID   : se0000u.pc
+ * 4. Service Name : 매도가능채권 매수, 매도, 취소
+ * 5. 관련Client   : SE0000
+ * 6. 관련테이블   : BOND_BALANCE, BOND_TRADE
+ * 7. 기능         : 매수, 매도, 취소
+ * 8. 작성자       : TKPACK
+ * 9. 작성일       : 2014.04.16
+ *10. 수정History  :
+ *
+ */
+
+#include "commsis.h" -- 공통 header
+
+
+
+SELL_INFO_TYPE
+CANCEL_INFO_TYPE
+BOND_TRADE%ROWTYPE
+
+int se0000u_BUY   (msg_in_st *MessageIn, msg_out_st *MessageOut); -- 매수
+int se0000u_SELL  (msg_in_st *MessageIn, msg_out_st *MessageOut); -- 매도
+int se0000u_CANCEL(msg_in_st *MessageIn, msg_out_st *MessageOut); -- 취소
+
+se0000u(TPSVCINFO *transb)
+{
+  /*--- Local변수 --------------------------------------------------------*/
+  int rtn = 0;
+  msg_in_st  *MessageIn;
+  msg_out_st *MessageOut;
+  
+  
+  /*--- 서비스 시작 처리 -------------------------------------------------*/
+  if (service_start(transb, &MessageIn, &MessageOut) < 0)
+    return;
+  
+  
+  /*--- 작업분기 ---------------------------------------------------------*/
+  switch(MessageIn->work_tp)
+  {
+    case 'B':    /* Buy */
+      rtn = se0000u_BUY(MessageIn, MessageOut);
+      break;
+    case 'S':    /* Sell */
+      rtn = se0000u_SELL(MessageIn, MessageOut);
+      break;
+    case 'C':    /* Cancel */
+      rtn = se0000u_CANCEL(MessageIn, MessageOut);
+      break;
+    default:     /* 작업구분 Error */
+      rtn = tx_syserr(MessageOut->error_no, MessageOut->error_msg, "99999","작업구분[Q/S] 오류...", 0);
+      break;
+  }
+  
+  
+  /*------------------------------------------------------------------------
+   * 결과를 Client에 Return 한다
+   *------------------------------------------------------------------------*/
+  service_end(rtn, MessageOut);
+}
+
+
+
+int se0000u_BUY(MessageIn, MessageOut)
+msg_in_st  *MessageIn;
+msg_out_st *MessageOut;
+{
+  /*--- Local변수 --------------------------------------------------------*/
+  BUY_INFO_TYPE t_buy_info;
+  
+  
+  
+  EXEC SQL EXECUTE
+    BEGIN
+      
+    END;
+  END-EXEC;
+  
+}
+
+
+

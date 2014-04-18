@@ -1,9 +1,10 @@
 CREATE OR REPLACE PROCEDURE ISS.PR_CHANGE_BOND_IR (
-  I_CHANGE_INFO IN  CHANGE_BOND_IR_INFO_TYPE -- TYPE : 이자율 변경 정보
-, O_BOND_TRADE  OUT BOND_TRADE%ROWTYPE       -- ROWTYPE : 거래내역
+  I_CHANGE_INFO IN  CHANGE_BOND_IR_INFO_TYPE  -- TYPE : 이자율 변경 정보
+, O_BOND_TRADE  OUT BOND_TRADE%ROWTYPE        -- ROWTYPE : 거래내역
 ) IS
   -- TYPE
-  T_EVENT_INFO      EVENT_INFO_TYPE;         -- TYPE    : 이벤트 INPUT
+  T_EVENT_INFO      EVENT_INFO_TYPE;          -- TYPE    : 이벤트 INPUT
+  T_EVENT_RESULT    EVENT_RESULT_EIR%ROWTYPE; -- ROWTYPE : 이벤트 OUTPUT
   
   -- CURSOR : 잔고
   CURSOR C_BOND_BALANCE_CUR IS
@@ -53,6 +54,7 @@ BEGIN
   --   * Object들을 초기화 및 Default값으로 설정함
   ----------------------------------------------------------------------------------------------------
   PR_INIT_EVENT_INFO(T_EVENT_INFO);
+  PR_INIT_EVENT_RESULT(T_EVENT_RESULT);
   PR_INIT_BOND_TRADE(O_BOND_TRADE);
   
   
@@ -60,6 +62,7 @@ BEGIN
   ----------------------------------------------------------------------------------------------------
   -- 4)이자율 변경 처리 프로시져 호출
   --   * INPUT 설정
+  --   * 금리변경 이벤트 생성, 현금흐름, EIR, 상각표 재산출
   ----------------------------------------------------------------------------------------------------
   T_EVENT_INFO.FUND_CODE  := I_CHANGE_INFO.FUND_CODE; -- 펀드코드(잔고 PK)
   T_EVENT_INFO.BOND_CODE  := I_CHANGE_INFO.BOND_CODE; -- 종목코드(잔고 PK)
@@ -69,17 +72,31 @@ BEGIN
   T_EVENT_INFO.EVENT_DATE := I_CHANGE_INFO.TRD_DATE;  -- 이벤트일
   T_EVENT_INFO.IR         := I_CHANGE_INFO.BOND_IR;   -- 표면이자율
   
-  PKG_EIR_NESTED_NSC.PR_APPLY_CHANG_IR_EVENT(T_EVENT_INFO);
+  PKG_EIR_NESTED_NSC.PR_APPLY_CHANG_IR_EVENT(T_EVENT_INFO, T_EVENT_RESULT);
   
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 5)
-  --   * 
-  --   * 
-  --   * 
+  -- 5)EIR정보 잔고반영
+  --   * 금리변경시 수정되는 정보
+  --   * IR, EIR, 장부금액, 장부원가, 경과이자, ...
   ----------------------------------------------------------------------------------------------------
+  T_BOND_BALANCE.BOND_IR      := T_EVENT_RESULT.IR;  -- 표면이자율
+  T_BOND_BALANCE.BOND_EIR     := T_EVENT_RESULT.EIR; -- 유효이자율
+  T_BOND_BALANCE.BOOK_AMT     := ;                   -- 장부금액
+  T_BOND_BALANCE.BOOK_PRC_AMT := ;                   -- 장부원가
+  T_BOND_BALANCE.ACCRUED_INT  := ;                   -- 경과이자
   
+  
+  -- UPDATE : 잔고 업데이트
+  UPDATE BOND_BALANCE 
+     SET ROW = T_BOND_BALANCE
+   WHERE BIZ_DATE  = T_BOND_BALANCE.BIZ_DATE   -- 영업일자(잔고 PK)
+     AND FUND_CODE = T_BOND_BALANCE.FUND_CODE  -- 펀드코드(잔고 PK)
+     AND BOND_CODE = T_BOND_BALANCE.BOND_CODE  -- 종목코드(잔고 PK)
+     AND BUY_DATE  = T_BOND_BALANCE.BUY_DATE   -- 매수일자(잔고 PK)
+     AND BUY_PRICE = T_BOND_BALANCE.BUY_PRICE  -- 매수단가(잔고 PK)
+     AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
   
   
   ----------------------------------------------------------------------------------------------------

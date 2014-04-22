@@ -124,12 +124,12 @@ BEGIN
     END IF;
     -- // END
     
-    T_BOND_BALANCE.BOOK_AMT        := (T_BOND_BALANCE.BOOK_AMT - T_ORGN_BOND_TRADE.SANGGAK_AMT) + T_ORGN_BOND_TRADE.BOOK_AMT;         -- 장부금액
-    T_BOND_BALANCE.BOOK_PRC_AMT    := (T_BOND_BALANCE.BOOK_PRC_AMT - T_ORGN_BOND_TRADE.SANGGAK_AMT) + T_ORGN_BOND_TRADE.BOOK_PRC_AMT; -- 장부원가
+    T_BOND_BALANCE.BOOK_AMT        := (T_BOND_BALANCE.BOOK_AMT - (T_ORGN_BOND_TRADE.DSCT_SANGGAK_AMT - T_ORGN_BOND_TRADE.EX_CHA_SANGGAK_AMT)) + T_ORGN_BOND_TRADE.BOOK_AMT;         -- 장부금액
+    T_BOND_BALANCE.BOOK_PRC_AMT    := (T_BOND_BALANCE.BOOK_PRC_AMT - (T_ORGN_BOND_TRADE.DSCT_SANGGAK_AMT - T_ORGN_BOND_TRADE.EX_CHA_SANGGAK_AMT)) + T_ORGN_BOND_TRADE.BOOK_PRC_AMT; -- 장부원가
     T_BOND_BALANCE.ACCRUED_INT     := T_BOND_BALANCE.ACCRUED_INT + T_ORGN_BOND_TRADE.ACCRUED_INT;                                     -- 경과이자
     T_BOND_BALANCE.BTRM_UNPAID_INT := T_BOND_BALANCE.BTRM_UNPAID_INT + T_ORGN_BOND_TRADE.BTRM_UNPAID_INT;                             -- 전기미수이자
     T_BOND_BALANCE.TTRM_BOND_INT   := T_BOND_BALANCE.TTRM_BOND_INT + T_ORGN_BOND_TRADE.BTRM_UNPAID_INT;                               -- 당기채권이자
-    T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT - T_ORGN_BOND_TRADE.SANGGAK_AMT;                                     -- 상각금액
+    T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT - (T_ORGN_BOND_TRADE.DSCT_SANGGAK_AMT - T_ORGN_BOND_TRADE.EX_CHA_SANGGAK_AMT);                                     -- 상각금액
     T_BOND_BALANCE.MI_SANGGAK_AMT  := T_BOND_BALANCE.MI_SANGGAK_AMT + T_BOND_BALANCE.SANGGAK_AMT;                                     -- 미상각금액(잔고.미상각금액-상각금액)
     T_BOND_BALANCE.TRD_PRFT        := T_BOND_BALANCE.TRD_PRFT - T_ORGN_BOND_TRADE.TRD_PRFT;                                           -- 매매이익
     T_BOND_BALANCE.TRD_LOSS        := T_BOND_BALANCE.TRD_LOSS - T_ORGN_BOND_TRADE.TRD_LOSS;                                           -- 매매손실
@@ -154,7 +154,7 @@ BEGIN
   -- 6)원거래내역 취소처리
   --   * 취소여부 필드값 세팅
   ----------------------------------------------------------------------------------------------------
-  T_ORGN_BOND_TRADE.CANCEL_YN := 'Y'; -- 취소여부
+  --T_ORGN_BOND_TRADE.CANCEL_YN := 'Y'; -- 취소여부
   
   -- UPDATE : 취소처리
   UPDATE BOND_TRADE 

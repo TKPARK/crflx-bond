@@ -16,11 +16,6 @@
 #include "commsis.h" -- 공통 header
 
 
-
-SELL_INFO_TYPE
-CANCEL_INFO_TYPE
-BOND_TRADE%ROWTYPE
-
 int se0000u_BUY   (msg_in_st *MessageIn, msg_out_st *MessageOut); -- 매수
 int se0000u_SELL  (msg_in_st *MessageIn, msg_out_st *MessageOut); -- 매도
 int se0000u_CANCEL(msg_in_st *MessageIn, msg_out_st *MessageOut); -- 취소
@@ -68,18 +63,356 @@ int se0000u_BUY(MessageIn, MessageOut)
 msg_in_st  *MessageIn;
 msg_out_st *MessageOut;
 {
-  /*--- Local변수 --------------------------------------------------------*/
-  BUY_INFO_TYPE t_buy_info;
+  /*--- Local 변수 --------------------------------------------------------*/
+  char     i_trd_date[8+1];   -- 거래일자
+  char     i_fund_code[10+1]; -- 펀드코드
+  char     i_bond_code[12+1]; -- 종목코드
+  charnum  i_buy_price;       -- 매수단가
+  charnum  i_buy_qty;         -- 매수수량
+  charnum  i_bond_ir;         -- 표면이자율
+  char     i_stl_dt_tp[1+1];  -- 결제일구분(1.당일, 2.익일)
+  
+  charnum  o_trd_face_amt;    -- 매매액면
+  charnum  o_trd_amt;         -- 매매금액
+  charnum  o_trd_net_amt;     -- 매매정산금액
+  charnum  o_tot_int;         -- 총이자금액
+  charnum  o_accrued_int;     -- 경과이자
+  ...
+  
+  /*--- Common 변수 --------------------------------------------------------*/
+  char  *sp1;
+  int   idx = 0;
   
   
+  /*------------------------------------------------------------------------
+   * Memory Clear
+   *------------------------------------------------------------------------*/
+  memset(i_trd_date,     0x00, sizeof(i_trd_date     ));
+  memset(i_fund_code,    0x00, sizeof(i_fund_code    ));
+  memset(i_bond_code,    0x00, sizeof(i_bond_code    ));
+  memset(i_buy_price,    0x00, sizeof(i_buy_price    ));
+  memset(i_buy_qty,      0x00, sizeof(i_buy_qty      ));
+  memset(i_bond_ir,      0x00, sizeof(i_bond_ir      ));
+  memset(i_stl_dt_tp,    0x00, sizeof(i_stl_dt_tp    ));
   
+  memset(o_trd_face_amt, 0x00, sizeof(o_trd_face_amt ));
+  memset(o_trd_amt,      0x00, sizeof(o_trd_amt      ));
+  memset(o_trd_net_amt,  0x00, sizeof(o_trd_net_amt  ));
+  memset(o_tot_int,      0x00, sizeof(o_tot_int      ));
+  memset(o_accrued_int,  0x00, sizeof(o_accrued_int  ));
+  
+  
+  /*------------------------------------------------------------------------
+   * InData Parsing
+   *------------------------------------------------------------------------*/
+  sp1 = MessageIn->data;
+  sp1 = ParsStr(sp1, TAB, i_trd_date);
+  sp1 = ParsStr(sp1, TAB, i_fund_code);
+  sp1 = ParsStr(sp1, TAB, i_bond_code);
+  sp1 = ParsStr(sp1, TAB, i_buy_price);
+  sp1 = ParsStr(sp1, TAB, i_buy_qty);
+  sp1 = ParsStr(sp1, TAB, i_bond_ir);
+  sp1 = ParsStr(sp1, TAB, i_stl_dt_tp);
+  
+  if (sp1 == NULL)
+    return (tx_syserr(MessageOut->error_no, MessageOut->error_msg, "99991", "Record Parsing 오류...", 0));
+  
+  
+  /*------------------------------------------------------------------------
+   * Call buy bond procedure
+   *------------------------------------------------------------------------*/
   EXEC SQL EXECUTE
+    DECLARE
+      T_BUY_INFO   BUY_INFO_TYPE;      -- INPUT
+      T_BOND_TRADE BOND_TRADE%ROWTYPE; -- OUTPUT
     BEGIN
+      -- BUY TYPE 생성
+      T_BUY_INFO := NEW BUY_INFO_TYPE(:i_trd_date  -- 거래일자
+                                    , :i_fund_code -- 펀드코드
+                                    , :i_bond_code -- 종목코드
+                                    , :i_buy_price -- 매수단가
+                                    , :i_buy_qty   -- 매수수량
+                                    , :i_bond_ir   -- 표면이자율
+                                    , :i_stl_dt_tp -- 결제일구분(1.당일, 2.익일)
+                                    );
+      
+      -- 채권 매수 프로시저 호출
+      PR_BUY_BOND(T_BUY_INFO, T_BOND_TRADE);
+      
+      -- Set output data
+      :o_trd_face_amt  := T_BOND_TRADE.TRD_FACE_AMT; -- 매매액면
+      :o_trd_amt       := T_BOND_TRADE.TRD_AMT;      -- 매매금액
+      :o_trd_net_amt   := T_BOND_TRADE.TRD_NET_AMT;  -- 매매정산금액
+      :o_tot_int       := T_BOND_TRADE.TOT_INT;      -- 총이자금액
+      :o_o_accrued_int := T_BOND_TRADE.ACCRUED_INT;  -- 경과이자
+      ...
       
     END;
   END-EXEC;
   
+  if (sqlca.sqlcode != 0)
+    return (tx_sqlerr(MessageOut->error_no
+                    , MessageOut->error_msg
+                    , sqlca.sqlerrm.sqlerrmc, 1));
+  
+  r_rec_cnt++;
+  
+  /*------------------------------------------------------------------------
+   * OutData Create
+   *------------------------------------------------------------------------*/
+  lprintf("o_trd_face_amt  :[%s]\n", o_trd_face_amt );
+  lprintf("o_trd_amt       :[%s]\n", o_trd_amt      );
+  lprintf("o_trd_net_amt   :[%s]\n", o_trd_net_amt  );
+  lprintf("o_tot_int       :[%s]\n", o_tot_int      );
+  lprintf("o_o_accrued_int :[%s]\n", o_o_accrued_int);
+  
+  ConcatStr(MessageOut->data, &idx, o_trd_face_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_net_amt);
+  ConcatStr(MessageOut->data, &idx, o_tot_int);
+  ConcatStr(MessageOut->data, &idx, o_o_accrued_int);
+  ...
+  memcpy(MessageOut->data + idx, NL, 1);
+  
+  
+  SetQryResultMsg(MessageOut);
+  /*----------------------------------------------*/
+  lprintf("...End se0000u_BUY\n");
+  /*----------------------------------------------*/
 }
 
+
+
+int se0000u_SELL(MessageIn, MessageOut)
+msg_in_st  *MessageIn;
+msg_out_st *MessageOut;
+{
+  /*--- Local 변수 --------------------------------------------------------*/
+  char     i_trd_date[8+1];   -- 거래일자(잔고 PK)
+  char     i_fund_code[10+1]; -- 펀드코드(잔고 PK)
+  char     i_bond_code[12+1]; -- 종목코드(잔고 PK)
+  char     i_buy_date[8+1];   -- 매수일자(잔고 PK)
+  charnum  i_buy_price;       -- 매수단가(잔고 PK)
+  charnum  i_balan_seq;       -- 잔고일련번호(잔고 PK)
+  charnum  i_sell_price;      -- 매도단가
+  charnum  i_sell_qty;        -- 매도수량
+  char     i_stl_dt_tp[1+1];  -- 결제일구분(1.당일, 2.익일)
+  
+  charnum  o_trd_face_amt;    -- 매매액면
+  charnum  o_trd_amt;         -- 매매금액
+  charnum  o_trd_net_amt;     -- 매매정산금액
+  charnum  o_tot_int;         -- 총이자금액
+  charnum  o_accrued_int;     -- 경과이자
+  ...
+  
+  /*--- Common 변수 --------------------------------------------------------*/
+  char  *sp1;
+  int   idx = 0;
+  
+  
+  /*------------------------------------------------------------------------
+   * Memory Clear
+   *------------------------------------------------------------------------*/
+  memset(i_trd_date,     0x00, sizeof(i_trd_date     ));
+  memset(i_fund_code,    0x00, sizeof(i_fund_code    ));
+  memset(i_bond_code,    0x00, sizeof(i_bond_code    ));
+  memset(i_buy_date,     0x00, sizeof(i_buy_date     ));
+  memset(i_buy_price,    0x00, sizeof(i_buy_price    ));
+  memset(i_balan_seq,    0x00, sizeof(i_balan_seq    ));
+  memset(i_sell_price,   0x00, sizeof(i_sell_price   ));
+  memset(i_sell_qty,     0x00, sizeof(i_sell_qty     ));
+  memset(i_stl_dt_tp,    0x00, sizeof(i_stl_dt_tp    ));
+  
+  memset(o_trd_face_amt, 0x00, sizeof(o_trd_face_amt ));
+  memset(o_trd_amt,      0x00, sizeof(o_trd_amt      ));
+  memset(o_trd_net_amt,  0x00, sizeof(o_trd_net_amt  ));
+  memset(o_tot_int,      0x00, sizeof(o_tot_int      ));
+  memset(o_accrued_int,  0x00, sizeof(o_accrued_int  ));
+  
+  
+  /*------------------------------------------------------------------------
+   * InData Parsing
+   *------------------------------------------------------------------------*/
+  sp1 = MessageIn->data;
+  sp1 = ParsStr(sp1, TAB, i_trd_date);
+  sp1 = ParsStr(sp1, TAB, i_fund_code);
+  sp1 = ParsStr(sp1, TAB, i_bond_code);
+  sp1 = ParsStr(sp1, TAB, i_buy_date);
+  sp1 = ParsStr(sp1, TAB, i_buy_price);
+  sp1 = ParsStr(sp1, TAB, i_balan_seq);
+  sp1 = ParsStr(sp1, TAB, i_sell_price);
+  sp1 = ParsStr(sp1, TAB, i_sell_qty);
+  sp1 = ParsStr(sp1, TAB, i_stl_dt_tp);
+  
+  if (sp1 == NULL)
+    return (tx_syserr(MessageOut->error_no, MessageOut->error_msg, "99991", "Record Parsing 오류...", 0));
+  
+  
+  /*------------------------------------------------------------------------
+   * Call buy bond procedure
+   *------------------------------------------------------------------------*/
+  EXEC SQL EXECUTE
+    DECLARE
+      T_SELL_INFO  SELL_INFO_TYPE;     -- INPUT
+      T_BOND_TRADE BOND_TRADE%ROWTYPE; -- OUTPUT
+    BEGIN
+      -- SELL TYPE 생성
+      T_SELL_INFO := NEW SELL_INFO_TYPE(:i_trd_date   -- 거래일자(잔고 PK)
+                                      , :i_fund_code  -- 펀드코드(잔고 PK)
+                                      , :i_bond_code  -- 종목코드(잔고 PK)
+                                      , :i_buy_date   -- 매수일자(잔고 PK)
+                                      , :i_buy_price  -- 매수단가(잔고 PK)
+                                      , :i_balan_seq  -- 잔고일련번호(잔고 PK)
+                                      , :i_sell_price -- 매도단가
+                                      , :i_sell_qty   -- 매도수량
+                                      , :i_stl_dt_tp  -- 결제일구분(1.당일, 2.익일)
+                                    );
+      
+      -- 채권 매도 프로시저 호출
+      PR_SELL_BOND(T_BUY_INFO, T_BOND_TRADE);
+      
+      -- Set output data
+      :o_trd_face_amt  := T_BOND_TRADE.TRD_FACE_AMT; -- 매매액면
+      :o_trd_amt       := T_BOND_TRADE.TRD_AMT;      -- 매매금액
+      :o_trd_net_amt   := T_BOND_TRADE.TRD_NET_AMT;  -- 매매정산금액
+      :o_tot_int       := T_BOND_TRADE.TOT_INT;      -- 총이자금액
+      :o_o_accrued_int := T_BOND_TRADE.ACCRUED_INT;  -- 경과이자
+      ...
+      
+    END;
+  END-EXEC;
+  
+  if (sqlca.sqlcode != 0)
+    return (tx_sqlerr(MessageOut->error_no
+                    , MessageOut->error_msg
+                    , sqlca.sqlerrm.sqlerrmc, 1));
+  
+  
+  /*------------------------------------------------------------------------
+   * OutData Create
+   *------------------------------------------------------------------------*/
+  lprintf("o_trd_face_amt  :[%s]\n", o_trd_face_amt );
+  lprintf("o_trd_amt       :[%s]\n", o_trd_amt      );
+  lprintf("o_trd_net_amt   :[%s]\n", o_trd_net_amt  );
+  lprintf("o_tot_int       :[%s]\n", o_tot_int      );
+  lprintf("o_o_accrued_int :[%s]\n", o_o_accrued_int);
+  
+  ConcatStr(MessageOut->data, &idx, o_trd_face_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_net_amt);
+  ConcatStr(MessageOut->data, &idx, o_tot_int);
+  ConcatStr(MessageOut->data, &idx, o_o_accrued_int);
+  ...
+  memcpy(MessageOut->data + idx, NL, 1);
+  
+  
+  SetQryResultMsg(MessageOut);
+  /*----------------------------------------------*/
+  lprintf("...End se0000u_SELL\n");
+  /*----------------------------------------------*/
+}
+
+
+
+int se0000u_CANCEL(MessageIn, MessageOut)
+msg_in_st  *MessageIn;
+msg_out_st *MessageOut;
+{
+  /*--- Local 변수 --------------------------------------------------------*/
+  char     i_trd_date[8+1];   -- 거래일자(PK)
+  charnum  i_trd_seq;         -- 매수단가(PK)
+  
+  charnum  o_trd_face_amt;    -- 매매액면
+  charnum  o_trd_amt;         -- 매매금액
+  charnum  o_trd_net_amt;     -- 매매정산금액
+  charnum  o_tot_int;         -- 총이자금액
+  charnum  o_accrued_int;     -- 경과이자
+  ...
+  
+  /*--- Common 변수 --------------------------------------------------------*/
+  char  *sp1;
+  int   idx = 0;
+  
+  
+  /*------------------------------------------------------------------------
+   * Memory Clear
+   *------------------------------------------------------------------------*/
+  memset(i_trd_date,     0x00, sizeof(i_trd_date     ));
+  memset(i_trd_seq,      0x00, sizeof(i_trd_seq      ));
+  
+  memset(o_trd_face_amt, 0x00, sizeof(o_trd_face_amt ));
+  memset(o_trd_amt,      0x00, sizeof(o_trd_amt      ));
+  memset(o_trd_net_amt,  0x00, sizeof(o_trd_net_amt  ));
+  memset(o_tot_int,      0x00, sizeof(o_tot_int      ));
+  memset(o_accrued_int,  0x00, sizeof(o_accrued_int  ));
+  
+  
+  /*------------------------------------------------------------------------
+   * InData Parsing
+   *------------------------------------------------------------------------*/
+  sp1 = MessageIn->data;
+  sp1 = ParsStr(sp1, TAB, i_trd_date);
+  sp1 = ParsStr(sp1, TAB, i_trd_seq);
+  
+  if (sp1 == NULL)
+    return (tx_syserr(MessageOut->error_no, MessageOut->error_msg, "99991", "Record Parsing 오류...", 0));
+  
+  
+  /*------------------------------------------------------------------------
+   * Call buy bond procedure
+   *------------------------------------------------------------------------*/
+  EXEC SQL EXECUTE
+    DECLARE
+      T_CANCEL_INFO  CANCEL_INFO_TYPE;   -- INPUT
+      T_BOND_TRADE   BOND_TRADE%ROWTYPE; -- OUTPUT
+    BEGIN
+      -- CANCEL TYPE 생성
+      T_CANCEL_INFO := NEW CANCEL_INFO_TYPE(:i_trd_date -- 거래일자(PK)
+                                          , :i_trd_seq  -- 거래일련번호(PK)
+                                          );
+      
+      -- 채권 취소 프로시저 호출
+      PR_CANCEL_BOND(T_BUY_INFO, T_BOND_TRADE);
+      
+      -- Set output data
+      :o_trd_face_amt  := T_BOND_TRADE.TRD_FACE_AMT; -- 매매액면
+      :o_trd_amt       := T_BOND_TRADE.TRD_AMT;      -- 매매금액
+      :o_trd_net_amt   := T_BOND_TRADE.TRD_NET_AMT;  -- 매매정산금액
+      :o_tot_int       := T_BOND_TRADE.TOT_INT;      -- 총이자금액
+      :o_o_accrued_int := T_BOND_TRADE.ACCRUED_INT;  -- 경과이자
+      ...
+      
+    END;
+  END-EXEC;
+  
+  if (sqlca.sqlcode != 0)
+    return (tx_sqlerr(MessageOut->error_no
+                    , MessageOut->error_msg
+                    , sqlca.sqlerrm.sqlerrmc, 1));
+  
+  
+  /*------------------------------------------------------------------------
+   * OutData Create
+   *------------------------------------------------------------------------*/
+  lprintf("o_trd_face_amt  :[%s]\n", o_trd_face_amt );
+  lprintf("o_trd_amt       :[%s]\n", o_trd_amt      );
+  lprintf("o_trd_net_amt   :[%s]\n", o_trd_net_amt  );
+  lprintf("o_tot_int       :[%s]\n", o_tot_int      );
+  lprintf("o_o_accrued_int :[%s]\n", o_o_accrued_int);
+  
+  ConcatStr(MessageOut->data, &idx, o_trd_face_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_amt);
+  ConcatStr(MessageOut->data, &idx, o_trd_net_amt);
+  ConcatStr(MessageOut->data, &idx, o_tot_int);
+  ConcatStr(MessageOut->data, &idx, o_o_accrued_int);
+  ...
+  memcpy(MessageOut->data + idx, NL, 1);
+  
+  
+  SetQryResultMsg(MessageOut);
+  /*----------------------------------------------*/
+  lprintf("...End se0000u_CANCEL\n");
+  /*----------------------------------------------*/
+}
 
 

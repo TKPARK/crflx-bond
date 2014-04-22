@@ -5,6 +5,7 @@ CREATE OR REPLACE PROCEDURE ISS.PR_CHANGE_BOND_IR (
   -- TYPE
   T_EVENT_INFO      EVENT_INFO_TYPE;          -- TYPE    : 이벤트 INPUT
   T_EVENT_RESULT    EVENT_RESULT_EIR%ROWTYPE; -- ROWTYPE : 이벤트 OUTPUT
+  T_BOND_BALANCE    BOND_BALANCE%ROWTYPE; -- ROWTYPE : 잔고
   
   -- CURSOR : 잔고
   CURSOR C_BOND_BALANCE_CUR IS
@@ -83,9 +84,9 @@ BEGIN
   ----------------------------------------------------------------------------------------------------
   T_BOND_BALANCE.BOND_IR      := T_EVENT_RESULT.IR;  -- 표면이자율
   T_BOND_BALANCE.BOND_EIR     := T_EVENT_RESULT.EIR; -- 유효이자율
-  T_BOND_BALANCE.BOOK_AMT     := ;                   -- 장부금액
-  T_BOND_BALANCE.BOOK_PRC_AMT := ;                   -- 장부원가
-  T_BOND_BALANCE.ACCRUED_INT  := ;                   -- 경과이자
+  --T_BOND_BALANCE.BOOK_AMT     := ;                   -- 장부금액
+  --T_BOND_BALANCE.BOOK_PRC_AMT := ;                   -- 장부원가
+  --T_BOND_BALANCE.ACCRUED_INT  := ;                   -- 경과이자
   
   
   -- UPDATE : 잔고 업데이트
@@ -97,18 +98,6 @@ BEGIN
      AND BUY_DATE  = T_BOND_BALANCE.BUY_DATE   -- 매수일자(잔고 PK)
      AND BUY_PRICE = T_BOND_BALANCE.BUY_PRICE  -- 매수단가(잔고 PK)
      AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
-  
-  
-  ----------------------------------------------------------------------------------------------------
-  -- 6)
-  --   * 
-  ----------------------------------------------------------------------------------------------------
-  
-  
-  
-  ----------------------------------------------------------------------------------------------------
-  -- 7)
-  ----------------------------------------------------------------------------------------------------
   
   
   

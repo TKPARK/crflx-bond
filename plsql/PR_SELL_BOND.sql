@@ -123,6 +123,7 @@ BEGIN
   T_EVENT_INFO.EVENT_TYPE          := '2';                                           -- Event종류(1.매수,2.매도,3.금리변동,4.손상,5.회복)
   T_EVENT_INFO.DL_UV               := I_SELL_INFO.SELL_PRICE;                        -- 거래단가
   T_EVENT_INFO.DL_QT               := I_SELL_INFO.SELL_QTY;                          -- 거래수량
+  T_EVENT_INFO.IR                  := I_SELL_INFO.BOND_IR;                           -- 표면이자율
   T_EVENT_INFO.SELL_RT             := I_SELL_INFO.SELL_QTY / T_BOND_BALANCE.TOT_QTY; -- 매도율
   
   PKG_EIR_NESTED_NSC.PR_APPLY_ADD_EVENT(T_EVENT_INFO, T_EVENT_RESULT);

@@ -4,7 +4,7 @@ DECLARE
 BEGIN
   -- BUY INFO
   T_BUY_INFO := NEW BUY_INFO_TYPE('20130516'     -- 거래일자
-                                  , 'KR_FUND'    -- 펀드코드
+                                  , 'TEST_TK'    -- 펀드코드
                                   , 'KR_단리채'  -- 종목코드
                                   , 10623        -- 매수단가
                                   , 100000       -- 매수수량

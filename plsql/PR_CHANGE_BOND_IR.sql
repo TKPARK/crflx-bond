@@ -54,8 +54,7 @@ BEGIN
   -- 3)변수초기화
   --   * Object들을 초기화 및 Default값으로 설정함
   ----------------------------------------------------------------------------------------------------
-  PR_INIT_EVENT_INFO(T_EVENT_INFO);
-  PR_INIT_EVENT_RESULT(T_EVENT_RESULT);
+  PKG_EIR_NESTED_NSC.PR_EVENT_INFO_TYPE_INIT(T_EVENT_INFO);
   PR_INIT_BOND_TRADE(O_BOND_TRADE);
   
   

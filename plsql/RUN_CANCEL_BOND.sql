@@ -3,8 +3,8 @@ DECLARE
   T_BOND_TRADE   BOND_TRADE%ROWTYPE; -- OUTPUT
 BEGIN
   -- CANCEL INFO
-  T_CANCEL_INFO := NEW CANCEL_INFO_TYPE('20130516' -- 거래일자(PK)
-                                      , 1          -- 거래일련번호(PK)
+  T_CANCEL_INFO := NEW CANCEL_INFO_TYPE('20140424' -- 거래일자(PK)
+                                      , 5          -- 거래일련번호(PK)
                                       );
   
   -- 취소

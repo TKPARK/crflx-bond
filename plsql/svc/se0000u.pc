@@ -266,7 +266,7 @@ msg_out_st *MessageOut;
                                       , :i_sell_price -- 매도단가
                                       , :i_sell_qty   -- 매도수량
                                       , :i_stl_dt_tp  -- 결제일구분(1.당일, 2.익일)
-                                    );
+                                      );
       
       -- 채권 매도 프로시저 호출
       PR_SELL_BOND(T_BUY_INFO, T_BOND_TRADE);

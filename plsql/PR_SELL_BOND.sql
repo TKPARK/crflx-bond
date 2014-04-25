@@ -85,6 +85,15 @@ BEGIN
     END IF;
   END IF;
   
+  
+  
+  ----------------------------------------------------------------------------------------------------
+  -- 3)변수초기화
+  --   * Object들을 초기화 및 Default값으로 설정함
+  ----------------------------------------------------------------------------------------------------
+  PKG_EIR_NESTED_NSC.PR_EVENT_INFO_TYPE_INIT(T_EVENT_INFO);
+  PR_INIT_BOND_TRADE(O_BOND_TRADE);
+  
   -- 결제일자 RULE //
   -- 1.당일 : 결제일자 = 매도일자
   -- 2.익일 : 결제일자 = 영업일 계산 모듈로 처리
@@ -99,24 +108,13 @@ BEGIN
   
   
   ----------------------------------------------------------------------------------------------------
-  -- 3)변수초기화
-  --   * Object들을 초기화 및 Default값으로 설정함
-  ----------------------------------------------------------------------------------------------------
-  PR_INIT_EVENT_INFO(T_EVENT_INFO);
-  PR_INIT_EVENT_RESULT(T_EVENT_RESULT);
-  PR_INIT_BOND_TRADE(O_BOND_TRADE);
-  PR_INIT_BOND_INFO(T_BOND_INFO);
-  
-  
-  
-  ----------------------------------------------------------------------------------------------------
   -- 4)매도 처리 프로시져 호출
   --   * INPUT 설정
   --   * 상각금액산출, 상각표 재산출, 상각이자, 장부금액산출
   ----------------------------------------------------------------------------------------------------
   T_EVENT_INFO.FUND_CODE           := T_BOND_BALANCE.FUND_CODE;                      -- 펀드코드(잔고 PK)
   T_EVENT_INFO.BOND_CODE           := T_BOND_BALANCE.BOND_CODE;                      -- 종목코드(잔고 PK)
-  T_EVENT_INFO.BUY_DATE            := T_BOND_BALANCE.BIZ_DATE;                       -- 매수일자(잔고 PK)
+  T_EVENT_INFO.BUY_DATE            := T_BOND_BALANCE.BUY_DATE;                       -- 매수일자(잔고 PK)
   T_EVENT_INFO.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                      -- 매수단가(잔고 PK)
   T_EVENT_INFO.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                      -- 잔고일련번호(잔고 PK)
   T_EVENT_INFO.EVENT_DATE          := O_BOND_TRADE.SETL_DATE;                        -- 이벤트일
@@ -144,11 +142,11 @@ BEGIN
    WHERE TRD_DATE = I_SELL_INFO.TRD_DATE;
   -- // END
   
-  O_BOND_TRADE.FUND_CODE           := I_SELL_INFO.FUND_CODE;                         -- 펀드코드
-  O_BOND_TRADE.BOND_CODE           := I_SELL_INFO.BOND_CODE;                         -- 종목코드
-  O_BOND_TRADE.BUY_DATE            := I_SELL_INFO.TRD_DATE;                          -- 매수일자
-  O_BOND_TRADE.BUY_PRICE           := I_SELL_INFO.BUY_PRICE;                         -- 매수단가
-  O_BOND_TRADE.BALAN_SEQ           := I_SELL_INFO.BALAN_SEQ;                         -- 잔고일련번호
+  O_BOND_TRADE.FUND_CODE           := T_BOND_BALANCE.FUND_CODE;                      -- 펀드코드
+  O_BOND_TRADE.BOND_CODE           := T_BOND_BALANCE.BOND_CODE;                      -- 종목코드
+  O_BOND_TRADE.BUY_DATE            := T_BOND_BALANCE.BUY_DATE;                       -- 매수일자
+  O_BOND_TRADE.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                      -- 매수단가
+  O_BOND_TRADE.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                      -- 잔고일련번호
   O_BOND_TRADE.TRD_TYPE_CD         := '3';                                           -- 매매유형코드(1.인수, 2.직매수, 3.직매도, 4.상환)
   O_BOND_TRADE.GOODS_BUY_SELL_SECT := '2';                                           -- 상품매수매도구분(1.상품매수, 2.상품매도)
   O_BOND_TRADE.STT_TERM_SECT       := I_SELL_INFO.STL_DT_TP;                         -- 결제기간구분(0.당일, 1.익일)
@@ -175,13 +173,13 @@ BEGIN
   
   O_BOND_TRADE.TRD_FACE_AMT := FN_AMOUNT(O_BOND_TRADE.TRD_QTY * 1000);                       -- 매매액면(수량 * 1000)
   O_BOND_TRADE.TRD_AMT      := TRUNC(O_BOND_TRADE.TRD_PRICE * O_BOND_TRADE.TRD_QTY / 10);    -- 매매금액(수량 * 단가 / 10)
-  O_BOND_TRADE.TRD_NET_AMT  := FN_AMOUNT(O_BOND_TRADE.TRD_AMT - O_BOND_TRADE.ACCRUED_INT);   -- 매매정산금액(매매금액 - 경과이자)
+  O_BOND_TRADE.TRD_NET_AMT  := FN_AMOUNT(O_BOND_TRADE.TRD_AMT - O_BOND_TRADE.TOT_INT);       -- 매매정산금액(매매금액 - 총이자금액)
   
   -- 할인상각금액, 할증상각금액 RULE //
   IF T_EVENT_RESULT.SANGGAK_AMT > 0 THEN
-    O_BOND_TRADE.DSCT_SANGGAK_AMT    := T_EVENT_RESULT.SANGGAK_AMT;      -- 할인상각금액
+    O_BOND_TRADE.EX_CHA_SANGGAK_AMT := T_EVENT_RESULT.SANGGAK_AMT;      -- 할증상각금액
   ELSE
-    O_BOND_TRADE.EX_CHA_SANGGAK_AMT  := T_EVENT_RESULT.SANGGAK_AMT * -1; -- 할증상각금액
+    O_BOND_TRADE.DSCT_SANGGAK_AMT   := T_EVENT_RESULT.SANGGAK_AMT * -1; -- 할인상각금액
   END IF;
   -- // END
   
@@ -237,11 +235,12 @@ BEGIN
   T_BOND_BALANCE.BOOK_PRC_AMT    := (T_BOND_BALANCE.BOOK_PRC_AMT + T_EVENT_RESULT.SANGGAK_AMT) - O_BOND_TRADE.BOOK_PRC_AMT; -- 장부원가
   T_BOND_BALANCE.ACCRUED_INT     := T_BOND_BALANCE.ACCRUED_INT - O_BOND_TRADE.ACCRUED_INT;         -- 경과이자
   T_BOND_BALANCE.BTRM_UNPAID_INT := T_BOND_BALANCE.BTRM_UNPAID_INT - O_BOND_TRADE.BTRM_UNPAID_INT; -- 전기미수이자
-  T_BOND_BALANCE.TTRM_BOND_INT   := T_BOND_BALANCE.TTRM_BOND_INT - O_BOND_TRADE.BTRM_UNPAID_INT;   -- 당기채권이자
+  T_BOND_BALANCE.TTRM_BOND_INT   := T_BOND_BALANCE.TTRM_BOND_INT - O_BOND_TRADE.TTRM_BOND_INT;     -- 당기채권이자
   T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT + T_EVENT_RESULT.SANGGAK_AMT;       -- 상각금액
   T_BOND_BALANCE.MI_SANGGAK_AMT  := T_BOND_BALANCE.MI_SANGGAK_AMT - T_BOND_BALANCE.SANGGAK_AMT;    -- 미상각금액(잔고.미상각금액-상각금액)
   T_BOND_BALANCE.TRD_PRFT        := T_BOND_BALANCE.TRD_PRFT + O_BOND_TRADE.TRD_PRFT;               -- 매매이익
   T_BOND_BALANCE.TRD_LOSS        := T_BOND_BALANCE.TRD_LOSS + O_BOND_TRADE.TRD_LOSS;               -- 매매손실
+  T_BOND_BALANCE.DRT_SELL_QTY    := T_BOND_BALANCE.DRT_SELL_QTY + O_BOND_TRADE.TRD_QTY;            -- 직매도수량
   T_BOND_BALANCE.TXSTD_AMT       := T_BOND_BALANCE.TXSTD_AMT + O_BOND_TRADE.TXSTD_AMT;             -- 과표금액
   T_BOND_BALANCE.CORP_TAX        := T_BOND_BALANCE.CORP_TAX + O_BOND_TRADE.CORP_TAX;               -- 선급법인세
   T_BOND_BALANCE.UNPAID_CORP_TAX := T_BOND_BALANCE.UNPAID_CORP_TAX + O_BOND_TRADE.UNPAID_CORP_TAX; -- 미지급법인세
@@ -257,7 +256,6 @@ BEGIN
      AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
   
   COMMIT;
-  
   DBMS_OUTPUT.PUT_LINE('PR_SELL_BOND END');
   
 END;

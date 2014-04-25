@@ -43,11 +43,11 @@ BEGIN
   -- 2)종목 확인
   ----------------------------------------------------------------------------------------------------
   OPEN C_BOND_INFO_CUR;
-  FETCH C_BOND_INFO_CUR INTO T_BOND_INFO;
-  IF C_BOND_INFO_CUR%NOTFOUND THEN
-    CLOSE C_BOND_INFO_CUR;
-    RAISE_APPLICATION_ERROR(-20011, '종목 오류');
-  END IF;
+    FETCH C_BOND_INFO_CUR INTO T_BOND_INFO;
+    IF C_BOND_INFO_CUR%NOTFOUND THEN
+      CLOSE C_BOND_INFO_CUR;
+      RAISE_APPLICATION_ERROR(-20011, '종목 오류');
+    END IF;
   CLOSE C_BOND_INFO_CUR;
   
   
@@ -57,11 +57,9 @@ BEGIN
   --   * Object들을 초기화 및 Default값으로 설정함
   --   * 잔고 TABLE SEQ 채번
   ----------------------------------------------------------------------------------------------------
-  PR_INIT_EVENT_INFO(T_EVENT_INFO);
-  PR_INIT_EVENT_RESULT(T_EVENT_RESULT);
+  PKG_EIR_NESTED_NSC.PR_EVENT_INFO_TYPE_INIT(T_EVENT_INFO);
   PR_INIT_BOND_TRADE(O_BOND_TRADE);
   PR_INIT_BOND_BALANCE(T_BOND_BALANCE);
-  PR_INIT_BOND_INFO(T_BOND_INFO);
   
   -- 잔고일련번호 채번
   SELECT NVL(MAX(BALAN_SEQ), 0) + 1 AS BALAN_SEQ
@@ -187,7 +185,6 @@ BEGIN
   INSERT INTO BOND_BALANCE VALUES T_BOND_BALANCE;
   
   COMMIT;
-  
   DBMS_OUTPUT.PUT_LINE('PR_BUY_BOND END');
   
 END;

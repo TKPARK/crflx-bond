@@ -36,5 +36,7 @@ BEGIN
   I_BOND_BALANCE.TXSTD_AMT       := 0;  -- 과표금액
   I_BOND_BALANCE.CORP_TAX        := 0;  -- 선급법인세
   I_BOND_BALANCE.UNPAID_CORP_TAX := 0;  -- 미지급법인세
+  I_BOND_BALANCE.DAMAGE_DT       := ''; -- 손상일자
+  I_BOND_BALANCE.REDUCTION_AM    := 0;  -- 감액금액
   
 END;

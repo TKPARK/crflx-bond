@@ -3,9 +3,9 @@ DECLARE
   T_BOND_TRADE BOND_TRADE%ROWTYPE; -- OUTPUT
 BEGIN
   -- BUY INFO
-  T_BUY_INFO := NEW BUY_INFO_TYPE('20121130'   -- 거래일자
-                                , 'TEST_0424A'  -- 펀드코드
-                                , 'KR_단리채2' -- 종목코드
+  T_BUY_INFO := NEW BUY_INFO_TYPE('20121120'   -- 거래일자
+                                , 'TEST_0428'  -- 펀드코드
+                                , 'KR_이표채'  -- 종목코드
                                 , 10623        -- 매수단가
                                 , 100000       -- 매수수량
                                 , 0.108        -- 표면이자율

@@ -155,7 +155,7 @@ BEGIN
   -- 6)원거래내역 취소처리
   --   * 취소여부 필드값 세팅
   ----------------------------------------------------------------------------------------------------
-  --T_ORGN_BOND_TRADE.CANCEL_YN := 'Y'; -- 취소여부
+  T_ORGN_BOND_TRADE.CANCEL_YN := 'Y'; -- 취소여부
   
   -- UPDATE : 취소처리
   UPDATE BOND_TRADE 
@@ -182,10 +182,7 @@ BEGIN
   O_BOND_TRADE.BUY_DATE   := T_BOND_BALANCE.BUY_DATE;   -- 매수일자
   O_BOND_TRADE.BUY_PRICE  := T_BOND_BALANCE.BUY_PRICE;  -- 매수단가
   O_BOND_TRADE.BALAN_SEQ  := T_BOND_BALANCE.BALAN_SEQ;  -- 잔고일련번호
-  
-  --O_BOND_TRADE.EVENT_DATE := T_EVENT_RESULT.EVENT_DATE; -- 이벤트일
-  --O_BOND_TRADE.EVENT_SEQ  := T_EVENT_RESULT.EVENT_SEQ;  -- 이벤트 SEQ
-  
+  O_BOND_TRADE.CANCEL_YN  := 'Y';                       -- 취소여부
   
   -- INSERT : 거래내역 등록
   INSERT INTO BOND_TRADE VALUES O_BOND_TRADE;

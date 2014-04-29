@@ -118,7 +118,7 @@ BEGIN
   T_EVENT_INFO.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                      -- 매수단가(잔고 PK)
   T_EVENT_INFO.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                      -- 잔고일련번호(잔고 PK)
   T_EVENT_INFO.EVENT_DATE          := O_BOND_TRADE.SETL_DATE;                        -- 이벤트일
-  T_EVENT_INFO.EVENT_TYPE          := '2';                                           -- Event종류(1.매수,2.매도,3.금리변동,4.손상,5.회복)
+  T_EVENT_INFO.EVENT_TYPE          := '2';                                           -- Event종류(1.매수, 2.매도, 3.금리변동, 4.손상, 5.회복)
   T_EVENT_INFO.DL_UV               := I_SELL_INFO.SELL_PRICE;                        -- 거래단가
   T_EVENT_INFO.DL_QT               := I_SELL_INFO.SELL_QTY;                          -- 거래수량
   T_EVENT_INFO.IR                  := I_SELL_INFO.BOND_IR;                           -- 표면이자율

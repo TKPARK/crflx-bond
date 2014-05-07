@@ -24,7 +24,7 @@ BEGIN
   --   I_BOND_CODE    -- 종목코드
   --   I_DAMAGE_PRICE -- 손상단가
   ----------------------------------------------------------------------------------------------------
-  
+  O_PRO_CN := 0;
   
   
   ----------------------------------------------------------------------------------------------------
@@ -58,22 +58,22 @@ BEGIN
        WHERE DAMAGE_DT = I_TRD_DATE;
       -- // END
       
-      T_BOND_DAMAGE.FUND_CODE           := T_BOND_BALANCE.FUND_CODE;                                     -- 펀드코드(잔고PK)
-      T_BOND_DAMAGE.BOND_CODE           := T_BOND_BALANCE.BOND_CODE;                                     -- 종목코드(잔고PK)
-      T_BOND_DAMAGE.BUY_DATE            := T_BOND_BALANCE.BUY_DATE;                                      -- 매수일자(잔고PK)
-      T_BOND_DAMAGE.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                                     -- 매수단가(잔고PK)
-      T_BOND_DAMAGE.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                                     -- 잔고일련번호(잔고PK)
-      T_BOND_DAMAGE.CANCEL_YN           := 'N';                                                          -- 취소여부(Y/N)
-      T_BOND_DAMAGE.DAMAGE_TYPE         := I_ADD_DAMAGE_TYPE;                                            -- 손상구분(1.손상, 2.추가손상, 3. 환입, 4.취소)
-      T_BOND_DAMAGE.DAMAGE_PRICE        := I_DAMAGE_PRICE;                                               -- 손상단가
-      T_BOND_DAMAGE.DAMAGE_QTY          := T_BOND_BALANCE.TOT_QTY;                                       -- 손상수량
-      T_BOND_DAMAGE.DAMAGE_EVAL_AMT     := I_DAMAGE_PRICE * T_BOND_BALANCE.TOT_QTY / 10;                 -- 손상평가금액(= 수량 * 손상단가 / 10)
+      T_BOND_DAMAGE.FUND_CODE       := T_BOND_BALANCE.FUND_CODE;                     -- 펀드코드(잔고PK)
+      T_BOND_DAMAGE.BOND_CODE       := T_BOND_BALANCE.BOND_CODE;                     -- 종목코드(잔고PK)
+      T_BOND_DAMAGE.BUY_DATE        := T_BOND_BALANCE.BUY_DATE;                      -- 매수일자(잔고PK)
+      T_BOND_DAMAGE.BUY_PRICE       := T_BOND_BALANCE.BUY_PRICE;                     -- 매수단가(잔고PK)
+      T_BOND_DAMAGE.BALAN_SEQ       := T_BOND_BALANCE.BALAN_SEQ;                     -- 잔고일련번호(잔고PK)
+      T_BOND_DAMAGE.CANCEL_YN       := 'N';                                          -- 취소여부(Y/N)
+      T_BOND_DAMAGE.DAMAGE_TYPE     := I_ADD_DAMAGE_TYPE;                            -- 손상구분(1.손상, 2.추가손상, 3. 환입, 4.취소)
+      T_BOND_DAMAGE.DAMAGE_PRICE    := I_DAMAGE_PRICE;                               -- 손상단가
+      T_BOND_DAMAGE.DAMAGE_QTY      := T_BOND_BALANCE.TOT_QTY;                       -- 손상수량
+      T_BOND_DAMAGE.DAMAGE_EVAL_AMT := I_DAMAGE_PRICE * T_BOND_BALANCE.TOT_QTY / 10; -- 손상평가금액(= 수량 * 손상단가 / 10)
       
       -- 2.추가손상, 3.환입 처리 RULE //
       IF I_ADD_DAMAGE_TYPE = '2' THEN
-        T_BOND_DAMAGE.REDUCTION_AM := ; -- 감액금액 = (장부원금 - 손상평가금액)
+        T_BOND_DAMAGE.REDUCTION_AM := T_BOND_BALANCE.BOOK_PRC_AMT - T_BOND_DAMAGE.DAMAGE_EVAL_AMT; -- 감액금액 = (장부원금 - 손상평가금액)
       ELSIF I_ADD_DAMAGE_TYPE = '3' THEN
-        T_BOND_DAMAGE.REDUCTION_AM := ; -- 감액금액 = ABS(장부원금 - 손상평가금액 - 기 감액금액)
+        T_BOND_DAMAGE.REDUCTION_AM := ABS(T_BOND_BALANCE.BOOK_PRC_AMT - T_BOND_DAMAGE.DAMAGE_EVAL_AMT - T_BOND_DAMAGE.REDUCTION_AM); -- 감액금액 = ABS(장부원금 - 손상평가금액 - 기 감액금액)
       END IF;
       -- // END
       
@@ -99,10 +99,11 @@ BEGIN
          AND BUY_PRICE = T_BOND_BALANCE.BUY_PRICE  -- 매수단가(잔고 PK)
          AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
       
+      O_PRO_CN := O_PRO_CN + 1;
     END LOOP;
   CLOSE C_BOND_BALANCE_CUR;
   
   COMMIT;
-  DBMS_OUTPUT.PUT_LINE('PR_DAMAGE_BOND END');
+  DBMS_OUTPUT.PUT_LINE('PR_ADD_DAMAGE_BOND END');
   
 END;

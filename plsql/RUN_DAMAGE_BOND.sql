@@ -1,10 +1,12 @@
 DECLARE
-  T_BOND_DAMAGE   BOND_DAMAGE%ROWTYPE;       -- OUTPUT
+  O_PRO_CN NUMBER := 0;
 BEGIN
   -- 손상
-  PR_DAMAGE_BOND('20130520'  -- 손상일자
+  PR_DAMAGE_BOND('20121231'  -- 손상일자
                , 'KR_이표채' -- 손상종목
                , 10650       -- 손상단가
-               , T_BOND_DAMAGE);
-    
+               , O_PRO_CN);
+  
+  DBMS_OUTPUT.PUT_LINE('O_PRO_CN=' || O_PRO_CN);
+  
 END;

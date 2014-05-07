@@ -18,12 +18,12 @@ CREATE OR REPLACE PROCEDURE ISS.PR_CANCEL_DAMAGE_BOND (
      WHERE DAMAGE_DT    = I_DAMAGE_DT     -- 손상일자
        AND BOND_CODE    = I_BOND_CODE     -- 종목코드
        AND DAMAGE_PRICE = I_DAMAGE_PRICE; -- 손상단가
-       
+  
   -- CURSOR : 잔고
   CURSOR C_BOND_BALANCE_CUR IS
     SELECT *
       FROM BOND_BALANCE
-     WHERE BIZ_DATE  = T_ORGN_BOND_DAMAGE.TRD_DATE   -- 거래일자(잔고 PK)
+     WHERE BIZ_DATE  = T_ORGN_BOND_DAMAGE.DAMAGE_DT  -- 거래일자(잔고 PK)
        AND FUND_CODE = T_ORGN_BOND_DAMAGE.FUND_CODE  -- 펀드코드(잔고 PK)
        AND BOND_CODE = T_ORGN_BOND_DAMAGE.BOND_CODE  -- 종목코드(잔고 PK)
        AND BUY_DATE  = T_ORGN_BOND_DAMAGE.BUY_DATE   -- 매수일자(잔고 PK)
@@ -36,7 +36,7 @@ BEGIN
   --   I_BOND_CODE    -- 종목코드
   --   I_DAMAGE_PRICE -- 손상단가
   ----------------------------------------------------------------------------------------------------
-  
+  O_PRO_CN := 0;
   
   
   ----------------------------------------------------------------------------------------------------
@@ -62,13 +62,13 @@ BEGIN
       --   * INPUT 설정
       --   * EVENT_RESULT 테이블 원거래내역 삭제
       ----------------------------------------------------------------------------------------------------
-      T_EVENT_INFO.FUND_CODE  := T_ORGN_BOND_DAMAGE.FUND_CODE; -- 펀드코드(잔고 PK)
-      T_EVENT_INFO.BOND_CODE  := T_ORGN_BOND_DAMAGE.BOND_CODE; -- 종목코드(잔고 PK)
-      T_EVENT_INFO.BUY_DATE   := T_ORGN_BOND_DAMAGE.BUY_DATE;  -- 매수일자(잔고 PK)
-      T_EVENT_INFO.BUY_PRICE  := T_ORGN_BOND_DAMAGE.BUY_PRICE; -- 매수단가(잔고 PK)
-      T_EVENT_INFO.BALAN_SEQ  := T_ORGN_BOND_DAMAGE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
-      T_EVENT_INFO.EVENT_DATE := T_ORGN_BOND_DAMAGE.TRD_DATE;  -- 이벤트일
-      T_EVENT_INFO.EVENT_SEQ  := T_ORGN_BOND_DAMAGE.EVENT_SEQ; -- 이벤트 SEQ
+      T_EVENT_INFO.FUND_CODE  := T_ORGN_BOND_DAMAGE.FUND_CODE;  -- 펀드코드(잔고 PK)
+      T_EVENT_INFO.BOND_CODE  := T_ORGN_BOND_DAMAGE.BOND_CODE;  -- 종목코드(잔고 PK)
+      T_EVENT_INFO.BUY_DATE   := T_ORGN_BOND_DAMAGE.BUY_DATE;   -- 매수일자(잔고 PK)
+      T_EVENT_INFO.BUY_PRICE  := T_ORGN_BOND_DAMAGE.BUY_PRICE;  -- 매수단가(잔고 PK)
+      T_EVENT_INFO.BALAN_SEQ  := T_ORGN_BOND_DAMAGE.BALAN_SEQ;  -- 잔고일련번호(잔고 PK)
+      T_EVENT_INFO.EVENT_DATE := T_ORGN_BOND_DAMAGE.EVENT_DATE; -- 이벤트일
+      T_EVENT_INFO.EVENT_SEQ  := T_ORGN_BOND_DAMAGE.EVENT_SEQ;  -- 이벤트 SEQ
       
       PKG_EIR_NESTED_NSC.PR_CANCEL_EVENT(T_EVENT_INFO);
       
@@ -94,8 +94,8 @@ BEGIN
       ----------------------------------------------------------------------------------------------------
       T_BOND_BALANCE.BOOK_AMT        := T_ORGN_BOND_DAMAGE.CHBF_BOOK_AMT;       -- 장부금액
       T_BOND_BALANCE.BOOK_PRC_AMT    := T_ORGN_BOND_DAMAGE.CHBF_BOOK_PRC_AMT;   -- 장부원금
-      T_BOND_BALANCE.BTRM_UNPAID_INT := T_ORGN_BOND_DAMAGE.BTRM_UNPAID_INT;     -- 미수이자
-      T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT + (T_ORGN_BOND_TRADE.DSCT_SANGGAK_AMT - T_ORGN_BOND_TRADE.EX_CHA_SANGGAK_AMT); -- 상각금액
+      T_BOND_BALANCE.BTRM_UNPAID_INT := T_BOND_BALANCE.BTRM_UNPAID_INT - T_ORGN_BOND_DAMAGE.TTRM_UNPAID_INT;     -- 미수이자
+      T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT + (T_ORGN_BOND_DAMAGE.DSCT_SANGGAK_AMT - T_ORGN_BOND_DAMAGE.EX_CHA_SANGGAK_AMT); -- 상각금액
       T_BOND_BALANCE.BTRM_EVAL_PRFT  := T_ORGN_BOND_DAMAGE.CHBF_BTRM_EVAL_PRFT; -- 전기평가이익
       T_BOND_BALANCE.BTRM_EVAL_LOSS  := T_ORGN_BOND_DAMAGE.CHBF_BTRM_EVAL_LOSS; -- 전기평가손실
       T_BOND_BALANCE.DAMAGE_YN       := 'N';                                    -- 손상여부(Y/N)
@@ -145,19 +145,18 @@ BEGIN
       T_BOND_DAMAGE.BUY_DATE    := T_BOND_BALANCE.BUY_DATE;  -- 매수일자
       T_BOND_DAMAGE.BUY_PRICE   := T_BOND_BALANCE.BUY_PRICE; -- 매수단가
       T_BOND_DAMAGE.BALAN_SEQ   := T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호
-  
+      
       T_BOND_DAMAGE.CANCEL_YN   := 'Y';                      -- 취소여부(Y/N)
       T_BOND_DAMAGE.DAMAGE_TYPE := '4';                      -- 손상구분(1.손상, 2.추가손상, 3. 환입, 4.취소)
       
       -- INSERT : 손상내역 등록
       INSERT INTO BOND_DAMAGE VALUES T_BOND_DAMAGE;
       
-      
-      
+      O_PRO_CN := O_PRO_CN + 1;
     END LOOP;
   CLOSE C_BOND_DAMAGE_CUR;
   
   COMMIT;
-  DBMS_OUTPUT.PUT_LINE('PR_DAMAGE_BOND END');
+  DBMS_OUTPUT.PUT_LINE('PR_CANCEL_DAMAGE_BOND END');
   
 END;

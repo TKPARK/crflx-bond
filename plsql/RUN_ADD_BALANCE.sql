@@ -4,7 +4,7 @@ DECLARE
 BEGIN
   -- SELL INFO
   T_SELL_INFO := NEW SELL_INFO_TYPE('20121120'  -- 거래일자(잔고 PK)
-                                  , 'TEST_0428' -- 펀드코드(잔고 PK)
+                                  , 'TEST_0429D' -- 펀드코드(잔고 PK)
                                   , 'KR_이표채' -- 종목코드(잔고 PK)
                                   , '20121120'  -- 매수일자(잔고 PK)
                                   , 10623       -- 매수단가(잔고 PK)
@@ -16,6 +16,6 @@ BEGIN
                                   );
   
   -- 잔고 생성
-  PR_ADD_BALANCE(T_SELL_INFO, '20130520', T_BOND_TRADE);
+  PR_ADD_BALANCE(T_SELL_INFO, '20121231', T_BOND_TRADE);
     
 END;

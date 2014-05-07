@@ -16,7 +16,7 @@ CREATE OR REPLACE PROCEDURE ISS.PR_DAMAGE_BOND (
       FROM BOND_BALANCE
      WHERE BIZ_DATE  = I_TRD_DATE   -- 거래일자(잔고 PK)
        AND BOND_CODE = I_BOND_CODE  -- 종목코드(잔고 PK)
-       AND TOT_QTY  > 0             -- 총잔고수량(0이상인 것)
+       AND TOT_QTY   > 0            -- 총잔고수량(0이상인 것)
        AND DAMAGE_YN = 'N'          -- 손상여부(N인 잔고만)
        FOR UPDATE;
 BEGIN
@@ -26,7 +26,7 @@ BEGIN
   --   I_BOND_CODE    -- 종목코드
   --   I_DAMAGE_PRICE -- 손상단가
   ----------------------------------------------------------------------------------------------------
-  
+  O_PRO_CN := 0;
   
   
   ----------------------------------------------------------------------------------------------------
@@ -43,6 +43,7 @@ BEGIN
       -- 3)잔고 Validation
       --   * 
       ----------------------------------------------------------------------------------------------------
+      
       
       
       ----------------------------------------------------------------------------------------------------
@@ -77,6 +78,8 @@ BEGIN
       -- 6)손상내역 등록
       --   * 손상내역 TABLE에 내역 등록
       ----------------------------------------------------------------------------------------------------
+      PR_INIT_BOND_DAMAGE(T_BOND_DAMAGE);
+      
       T_BOND_DAMAGE.DAMAGE_DT := I_TRD_DATE;             -- 손상일자(PK)
       
       -- 거래일련번호 채번 RULE //
@@ -91,6 +94,8 @@ BEGIN
       T_BOND_DAMAGE.BUY_DATE            := T_BOND_BALANCE.BUY_DATE;                                      -- 매수일자(잔고PK)
       T_BOND_DAMAGE.BUY_PRICE           := T_BOND_BALANCE.BUY_PRICE;                                     -- 매수단가(잔고PK)
       T_BOND_DAMAGE.BALAN_SEQ           := T_BOND_BALANCE.BALAN_SEQ;                                     -- 잔고일련번호(잔고PK)
+      T_BOND_DAMAGE.EVENT_DATE          := T_EVENT_RESULT.EVENT_DATE;                                    -- 이벤트일
+      T_BOND_DAMAGE.EVENT_SEQ           := T_EVENT_RESULT.EVENT_SEQ;                                     -- 이벤트 SEQ
       T_BOND_DAMAGE.CANCEL_YN           := 'N';                                                          -- 취소여부(Y/N)
       T_BOND_DAMAGE.DAMAGE_TYPE         := '1';                                                          -- 손상구분(1.손상, 2.추가손상, 3. 환입, 4.취소)
       T_BOND_DAMAGE.DAMAGE_PRICE        := I_DAMAGE_PRICE;                                               -- 손상단가
@@ -102,7 +107,7 @@ BEGIN
       T_BOND_DAMAGE.CHAF_BOOK_PRC_AMT   := T_BOND_BALANCE.BOOK_PRC_AMT + T_EVENT_RESULT.SANGGAK_AMT;     -- 변경후 장부원가
       T_BOND_DAMAGE.ACCRUED_INT         := T_BOND_BALANCE.ACCRUED_INT;                                   -- 경과이자
       T_BOND_DAMAGE.TTRM_UNPAID_INT     := T_EVENT_RESULT.TOT_INT - T_BOND_BALANCE.ACCRUED_INT - T_BOND_BALANCE.BTRM_UNPAID_INT; -- 당기미수이자(= 총이자 - 경과이자 - 기.미수이자)
-      T_BOND_DAMAGE.BTRM_UNPAID_INT     := T_BOND_BALANCE.BTRM_UNPAID_INT + T_BOND_DAMAGE.TTRM_BOND_INT; -- 전기미수이자
+      T_BOND_DAMAGE.BTRM_UNPAID_INT     := T_BOND_BALANCE.BTRM_UNPAID_INT + T_BOND_DAMAGE.TTRM_UNPAID_INT; -- 전기미수이자
       
       -- 할인상각금액, 할증상각금액 RULE //
       IF T_EVENT_RESULT.SANGGAK_AMT > 0 THEN
@@ -115,7 +120,7 @@ BEGIN
       T_BOND_DAMAGE.CHBF_BTRM_EVAL_PRFT := T_BOND_BALANCE.BTRM_EVAL_PRFT;                                -- 변경전 전기평가이익
       T_BOND_DAMAGE.CHBF_BTRM_EVAL_LOSS := T_BOND_BALANCE.BTRM_EVAL_LOSS;                                -- 변경전 전기평가손실
       
-      T_BOND_DAMAGE.REDUCTION_AM        := T_BOND_DAMAGE.BOOK_PRC_AMT - T_BOND_DAMAGE.DAMAGE_EVAL_AMT;   -- 감액금액(= 장부원금 - 손상평가금액)
+      T_BOND_DAMAGE.REDUCTION_AM        := T_BOND_DAMAGE.CHBF_BOOK_PRC_AMT - T_BOND_DAMAGE.DAMAGE_EVAL_AMT; -- 감액금액(= 장부원금 - 손상평가금액)
       
       -- INSERT : 손상내역 등록
       INSERT INTO BOND_DAMAGE VALUES T_BOND_DAMAGE;
@@ -126,13 +131,13 @@ BEGIN
       -- 7)잔고 업데이트
       --   * 손상시 잔고에서 변경되는 부분 업데이트
       ----------------------------------------------------------------------------------------------------
-      T_BOND_BALANCE.BOOK_AMT        := T_BOND_DAMAGE.BOOK_AMT;                                  -- 장부금액
-      T_BOND_BALANCE.BOOK_PRC_AMT    := T_BOND_DAMAGE.BOOK_PRC_AMT;                              -- 장부원금
+      T_BOND_BALANCE.BOOK_AMT        := T_BOND_DAMAGE.CHAF_BOOK_AMT;                             -- 장부금액
+      T_BOND_BALANCE.BOOK_PRC_AMT    := T_BOND_DAMAGE.CHAF_BOOK_PRC_AMT;                         -- 장부원금
       T_BOND_BALANCE.BTRM_UNPAID_INT := T_BOND_DAMAGE.BTRM_UNPAID_INT;                           -- 미수이자
       T_BOND_BALANCE.SANGGAK_AMT     := T_BOND_BALANCE.SANGGAK_AMT + T_EVENT_RESULT.SANGGAK_AMT; -- 상각금액
       T_BOND_BALANCE.BTRM_EVAL_PRFT  := 0;                                                       -- 전기평가이익
       T_BOND_BALANCE.BTRM_EVAL_LOSS  := 0;                                                       -- 전기평가손실
-      T_BOND_BALANCE.DAMAGE_YN       := 'Y'                                                      -- 손상여부(Y/N)
+      T_BOND_BALANCE.DAMAGE_YN       := 'Y';                                                     -- 손상여부(Y/N)
       T_BOND_BALANCE.DAMAGE_DT       := T_BOND_DAMAGE.DAMAGE_DT;                                 -- 손상일자
       T_BOND_BALANCE.REDUCTION_AM    := T_BOND_DAMAGE.REDUCTION_AM;                              -- 감액금액
       
@@ -147,6 +152,7 @@ BEGIN
          AND BUY_PRICE = T_BOND_BALANCE.BUY_PRICE  -- 매수단가(잔고 PK)
          AND BALAN_SEQ = T_BOND_BALANCE.BALAN_SEQ; -- 잔고일련번호(잔고 PK)
       
+      O_PRO_CN := O_PRO_CN + 1;
     END LOOP;
   CLOSE C_BOND_BALANCE_CUR;
   

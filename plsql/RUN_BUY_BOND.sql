@@ -4,7 +4,7 @@ DECLARE
 BEGIN
   -- BUY INFO
   T_BUY_INFO := NEW BUY_INFO_TYPE('20121120'   -- 거래일자
-                                , 'TEST_0428'  -- 펀드코드
+                                , 'TEST_0429D'  -- 펀드코드
                                 , 'KR_이표채'  -- 종목코드
                                 , 10623        -- 매수단가
                                 , 100000       -- 매수수량
